@@ -1,163 +1,133 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import GestionDiaTrabajo from '../components/GestionDiaTrabajo';
+import ConfiguracionSemanal from '../components/ConfiguracionSemanal';
 import { guardarEstadoDia } from '../services/api';
 
 // Mock del servicio de API
 jest.mock('../services/api');
 
-describe('US_001: Deshabilitar/habilitar días de trabajo', () => {
+describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('Escenario 1: Habilitación de día', async () => {
+  test('Escenario 1: Habilitación de día (Sábado)', async () => {
     (guardarEstadoDia as jest.Mock).mockResolvedValueOnce(true);
 
-    render(
-      <GestionDiaTrabajo
-        diaSemana="lunes"
-        habilitadoInicial={false}
-        tieneReservasInicial={false}
-      />
-    );
+    render(<ConfiguracionSemanal />);
 
-    const contenedor = screen.getByTestId('dia-contenedor');
-    expect(contenedor).toHaveClass('bg-gray-200');
-    expect(screen.queryByTestId('btn-agregar-turno')).not.toBeInTheDocument();
+    const contenedorSabado = screen.getByTestId('dia-contenedor-sábado');
+    expect(contenedorSabado).toHaveClass('bg-gray-200');
 
-    // Marcamos el checkbox para habilitar
-    const checkbox = screen.getByTestId('dia-checkbox');
-    fireEvent.click(checkbox);
-    expect(checkbox).toBeChecked();
+    // Buscamos y marcamos el checkbox de Sábado
+    const checkboxSabado = screen.getByTestId('dia-checkbox-sábado');
+    expect(checkboxSabado).not.toBeChecked();
+    fireEvent.click(checkboxSabado);
+    expect(checkboxSabado).toBeChecked();
 
-    // Guardamos los cambios
-    const btnGuardar = screen.getByTestId('btn-guardar');
-    fireEvent.click(btnGuardar);
+    // Guardamos cambios globalmente
+    const btnGuardarGlobal = screen.getByTestId('btn-guardar-global');
+    fireEvent.click(btnGuardarGlobal);
 
     // Verificaciones
     await waitFor(() => {
-      expect(guardarEstadoDia).toHaveBeenCalledWith('lunes', true, false);
-      expect(contenedor).toHaveClass('bg-white');
-      expect(screen.getByTestId('btn-agregar-turno')).toBeInTheDocument();
-      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
+      expect(guardarEstadoDia).toHaveBeenCalledWith('Sábado', true, false);
+      expect(contenedorSabado).toHaveClass('bg-white');
+      expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
         'Cambios guardados exitosamente'
       );
     });
   });
 
-  test('Escenario 2: Deshabilitación de día sin turnos reservados', async () => {
+  test('Escenario 2: Deshabilitación de día sin turnos reservados (Jueves)', async () => {
     (guardarEstadoDia as jest.Mock).mockResolvedValueOnce(true);
 
-    render(
-      <GestionDiaTrabajo
-        diaSemana="martes"
-        habilitadoInicial={true}
-        tieneReservasInicial={false}
-      />
-    );
+    render(<ConfiguracionSemanal />);
 
-    const contenedor = screen.getByTestId('dia-contenedor');
-    expect(contenedor).toHaveClass('bg-white');
-    expect(screen.getByTestId('btn-agregar-turno')).toBeInTheDocument();
+    const contenedorJueves = screen.getByTestId('dia-contenedor-jueves');
+    expect(contenedorJueves).toHaveClass('bg-white');
 
-    const turnos = screen.getAllByTestId('turno-item');
-    turnos.forEach((turno) => expect(turno).toHaveClass('bg-blue-50'));
+    // Desmarcamos el checkbox de Jueves (no tiene reservas)
+    const checkboxJueves = screen.getByTestId('dia-checkbox-jueves');
+    expect(checkboxJueves).toBeChecked();
+    fireEvent.click(checkboxJueves);
+    expect(checkboxJueves).not.toBeChecked();
 
-    // Desmarcamos el checkbox
-    const checkbox = screen.getByTestId('dia-checkbox');
-    fireEvent.click(checkbox);
-    expect(checkbox).not.toBeChecked();
-
-    // Guardamos los cambios
-    const btnGuardar = screen.getByTestId('btn-guardar');
-    fireEvent.click(btnGuardar);
+    // Guardamos cambios globalmente
+    const btnGuardarGlobal = screen.getByTestId('btn-guardar-global');
+    fireEvent.click(btnGuardarGlobal);
 
     // Verificaciones
     await waitFor(() => {
-      expect(guardarEstadoDia).toHaveBeenCalledWith('martes', false, false);
-      expect(contenedor).toHaveClass('bg-gray-200');
-      expect(screen.queryByTestId('btn-agregar-turno')).not.toBeInTheDocument();
-      turnos.forEach((turno) => expect(turno).toHaveClass('bg-gray-100'));
-      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
+      expect(guardarEstadoDia).toHaveBeenCalledWith('Jueves', false, false);
+      expect(contenedorJueves).toHaveClass('bg-gray-200');
+      expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
         'Cambios guardados exitosamente'
       );
     });
   });
 
-  test('Escenario 3: Deshabilitación de día con turnos reservados, donde se cancelan las reservas', async () => {
+  test('Escenario 3: Deshabilitación de día con turnos reservados, donde se cancelan las reservas (Lunes)', async () => {
     (guardarEstadoDia as jest.Mock).mockResolvedValueOnce(true);
 
-    render(
-      <GestionDiaTrabajo
-        diaSemana="miércoles"
-        habilitadoInicial={true}
-        tieneReservasInicial={true}
-      />
-    );
+    render(<ConfiguracionSemanal />);
 
-    const contenedor = screen.getByTestId('dia-contenedor');
+    const contenedorLunes = screen.getByTestId('dia-contenedor-lunes');
+    expect(contenedorLunes).toHaveClass('bg-white');
 
-    // Intentamos deshabilitar
-    const checkbox = screen.getByTestId('dia-checkbox');
-    fireEvent.click(checkbox);
+    // Intentamos desmarcar Lunes (tiene reservas)
+    const checkboxLunes = screen.getByTestId('dia-checkbox-lunes');
+    fireEvent.click(checkboxLunes);
 
-    // Guardamos
-    const btnGuardar = screen.getByTestId('btn-guardar');
-    fireEvent.click(btnGuardar);
+    // Intentamos guardar cambios globalmente
+    const btnGuardarGlobal = screen.getByTestId('btn-guardar-global');
+    fireEvent.click(btnGuardarGlobal);
 
-    // Debe mostrar la advertencia sin llamar a la API todavía
-    const advertencia = screen.getByTestId('advertencia-reservas');
-    expect(advertencia).toBeInTheDocument();
+    // Debe mostrar la advertencia global y no disparar la API todavía
+    const advertenciaGlobal = screen.getByTestId('advertencia-reservas-global');
+    expect(advertenciaGlobal).toBeInTheDocument();
     expect(guardarEstadoDia).not.toHaveBeenCalled();
 
-    // Elegimos cancelar turnos en el diálogo
-    const btnConfirmar = screen.getByTestId('btn-confirmar-cancelar');
-    fireEvent.click(btnConfirmar);
+    // Confirmamos cancelar turnos
+    const btnConfirmarCancelar = screen.getByTestId('btn-confirmar-cancelar-global');
+    fireEvent.click(btnConfirmarCancelar);
 
-    // Verificaciones finales
+    // Verificaciones
     await waitFor(() => {
-      expect(guardarEstadoDia).toHaveBeenCalledWith('miércoles', false, true);
-      expect(contenedor).toHaveClass('bg-gray-200');
-      expect(screen.queryByTestId('btn-agregar-turno')).not.toBeInTheDocument();
-      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
-        'Reservas para el día miércoles canceladas'
+      expect(guardarEstadoDia).toHaveBeenCalledWith('Lunes', false, true);
+      expect(contenedorLunes).toHaveClass('bg-gray-200');
+      expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
+        'Reservas para el día Lunes canceladas'
       );
     });
   });
 
-  test('Escenario 4: Deshabilitación de día con turnos reservados, pero se descartan los cambios', async () => {
-    render(
-      <GestionDiaTrabajo
-        diaSemana="jueves"
-        habilitadoInicial={true}
-        tieneReservasInicial={true}
-      />
-    );
+  test('Escenario 4: Deshabilitación de día con turnos reservados, pero se descartan los cambios (Miércoles)', async () => {
+    render(<ConfiguracionSemanal />);
 
-    const contenedor = screen.getByTestId('dia-contenedor');
+    const contenedorMiercoles = screen.getByTestId('dia-contenedor-miércoles');
+    expect(contenedorMiercoles).toHaveClass('bg-white');
 
-    // Intentamos deshabilitar
-    const checkbox = screen.getByTestId('dia-checkbox');
-    fireEvent.click(checkbox);
+    // Intentamos desmarcar Miércoles (tiene reservas)
+    const checkboxMiercoles = screen.getByTestId('dia-checkbox-miércoles');
+    fireEvent.click(checkboxMiercoles);
 
-    // Guardamos
-    const btnGuardar = screen.getByTestId('btn-guardar');
-    fireEvent.click(btnGuardar);
+    // Intentamos guardar cambios globalmente
+    const btnGuardarGlobal = screen.getByTestId('btn-guardar-global');
+    fireEvent.click(btnGuardarGlobal);
 
-    // Mostrar advertencia
-    const advertencia = screen.getByTestId('advertencia-reservas');
-    expect(advertencia).toBeInTheDocument();
+    // Debe mostrar la advertencia global
+    const advertenciaGlobal = screen.getByTestId('advertencia-reservas-global');
+    expect(advertenciaGlobal).toBeInTheDocument();
 
-    // Elegimos descartar cambios
-    const btnDescartar = screen.getByTestId('btn-confirmar-descartar');
-    fireEvent.click(btnDescartar);
+    // Descartamos cambios
+    const btnConfirmarDescartar = screen.getByTestId('btn-confirmar-descartar-global');
+    fireEvent.click(btnConfirmarDescartar);
 
-    // Verificaciones: debe revertir al estado inicial activo
-    expect(contenedor).toHaveClass('bg-white');
-    expect(checkbox).toBeChecked();
-    expect(screen.getByTestId('btn-agregar-turno')).toBeInTheDocument();
-    expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
+    // Verificaciones: debe volver al estado activo inicial
+    expect(contenedorMiercoles).toHaveClass('bg-white');
+    expect(checkboxMiercoles).toBeChecked();
+    expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
       'Cambios descartados'
     );
     expect(guardarEstadoDia).not.toHaveBeenCalled();
