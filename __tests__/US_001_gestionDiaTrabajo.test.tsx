@@ -4,7 +4,7 @@ import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
 import { guardarEstadoDia } from '../services/US_001_persistenciaEstadoDia';
 
 // Mock del servicio de API
-jest.mock('../services/api');
+jest.mock('../services/US_001_persistenciaEstadoDia');
 
 describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
   beforeEach(() => {
