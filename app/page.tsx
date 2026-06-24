@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import ConfiguracionSemanal from '../components/ConfiguracionSemanal';
-import CalendarioAdmin from '../components/CalendarioAdmin';
+import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
+import CalendarioAdmin from '../components/US_005_calendarioAdmin';
 
 export default function Home() {
   const [selectedUs, setSelectedUs] = useState<'us001' | 'us005' | null>(null);

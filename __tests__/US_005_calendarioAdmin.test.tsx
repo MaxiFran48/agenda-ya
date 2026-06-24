@@ -1,8 +1,8 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import CalendarioAdmin from '../components/CalendarioAdmin';
-import { guardarBloqueos } from '../services/api';
+import CalendarioAdmin from '../components/US_005_calendarioAdmin';
+import { guardarBloqueos } from '../services/US_001_persistenciaEstadoDia';
 
 // Mockeamos el servicio para no pegarle a una base de datos real durante el test
 jest.mock('../services/api');

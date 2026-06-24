@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { guardarEstadoDia } from '../services/api';
-import GestionDiaTrabajo from './GestionDiaTrabajo';
+import { guardarEstadoDia } from '../services/US_001_persistenciaEstadoDia';
+import GestionDiaTrabajo from './US_001_gestionDiaTrabajo';
 
 interface DayConfig {
   diaSemana: string;

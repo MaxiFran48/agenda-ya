@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ConfiguracionSemanal from '../components/ConfiguracionSemanal';
-import { guardarEstadoDia } from '../services/api';
+import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
+import { guardarEstadoDia } from '../services/US_001_persistenciaEstadoDia';
 
 // Mock del servicio de API
 jest.mock('../services/api');
