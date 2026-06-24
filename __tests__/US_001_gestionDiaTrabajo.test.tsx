@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
-import { guardarEstadoDia } from '../services/US_001_persistenciaEstadoDia';
+import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
 
 // Mock del servicio de API
-jest.mock('../services/api');
+jest.mock('../services/persistenciaEstadoDia');
 
 describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { guardarBloqueos } from '../services/US_001_persistenciaEstadoDia';
+import { guardarBloqueos } from '../services/persistenciaEstadoDia';
 
 export default function CalendarioAdmin({ fechaActual, reservas = [] }: { fechaActual: Date, reservas?: any[] }) {
   const [dia20Clase, setDia20Clase] = useState('');
