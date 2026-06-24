@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { guardarEstadoDia } from '../services/US_001_persistenciaEstadoDia';
+import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
 import GestionDiaTrabajo from './US_001_gestionDiaTrabajo';
 
 interface DayConfig {

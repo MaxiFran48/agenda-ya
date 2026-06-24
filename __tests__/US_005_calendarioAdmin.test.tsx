@@ -2,10 +2,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CalendarioAdmin from '../components/US_005_calendarioAdmin';
-import { guardarBloqueos } from '../services/US_001_persistenciaEstadoDia';
+import { guardarBloqueos } from '../services/persistenciaEstadoDia';
 
 // Mockeamos el servicio para no pegarle a una base de datos real durante el test
-jest.mock('../services/api');
+jest.mock('../services/persistenciaEstadoDia');
 
 describe('US_005: Seleccionar días para bloquearlos', () => {
 
