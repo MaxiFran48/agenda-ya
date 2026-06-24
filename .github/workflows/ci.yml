@@ -1,0 +1,44 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**' # Disparar con cualquier rama
+  pull_request:
+    branches:
+      - '**' # Disparar al crear o actualizar un Pull Request en cualquier rama
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Grabar el código en la máquina virtual de GitHub
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Instalar pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # 3. Instalar Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # 4. Instalar las dependencias del proyecto
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. Ejecutar tests unitarios
+      - name: Run unit tests
+        run: pnpm test
+
+      # 6. Compilar la app de Next.js para verificar que no haya errores de compilación
+      - name: Build project
+        run: pnpm build
