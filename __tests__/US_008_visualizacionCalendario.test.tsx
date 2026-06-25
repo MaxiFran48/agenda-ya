@@ -1,51 +1,62 @@
 // __tests__/US_008_visualizacionCalendario.test.tsx
-/* eslint-disable no-undef */
-declare const describe: any;
-declare const test: any;
-declare const expect: any;
+import { evaluarDisponibilidadDia, DiaCalendario, AgendaSemanal } from '../services/US_008_visualizacionCalendario';
 
-import { evaluarDisponibilidadDia, AgendaSemanal, DiaCalendario } from '../services/US_008_visualizacionCalendario';
+describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-01: Debe habilitar días hábiles según la agenda y deshabilitar fines de semana', () => {
+  const agendaSemanal = (): AgendaSemanal => ({
+    diasHabilitados: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    antelacionMinimaMinutos: 30,
+  });
 
-describe('Pruebas Unitarias para US_008 - Daniel Salomón', () => {
-
-  // ESCENARIO 1: Carga inicial del calendario (Días hábiles vs Fines de semana)
-  test('CP-008-01: Debe habilitar días hábiles según la agenda y deshabilitar fines de semana', () => {
-    const agendaSemanal: AgendaSemanal = {
-      Lunes: true, Martes: true, Miercoles: true, Jueves: true, Viernes: true,
-      Sabado: false, Domingo: false
+  test('Debería habilitar un día laboral común (Martes)', () => {
+    const diaLaboral: DiaCalendario = {
+      nombreDia: 'Martes',
+      esFinDeSemana: false,
+      esBloqueadoManual: false,
     };
-    
-    const diaMartes: DiaCalendario = { nombreDia: 'Martes', esBloqueadoManual: false };
-    const diaSabado: DiaCalendario = { nombreDia: 'Sabado', esBloqueadoManual: false };
-
-    expect(evaluarDisponibilidadDia(diaMartes, agendaSemanal)).toBe(true);
-    expect(evaluarDisponibilidadDia(diaSabado, agendaSemanal)).toBe(false);
+    expect(evaluarDisponibilidadDia(diaLaboral, agendaSemanal())).toBe(true);
   });
 
-  // ESCENARIO 2: Días bloqueados manualmente por el administrador
-  test('CP-008-02: Debe deshabilitar un día si el administrador lo configuró como bloqueado', () => {
-    const agendaSemanal: AgendaSemanal = { Lunes: true, Martes: true, Miercoles: true };
-    const diaJuevesBloqueado: DiaCalendario = { nombreDia: 'Jueves', esBloqueadoManual: true };
+  test('Debería deshabilitar un día de fin de semana (Sábado)', () => {
+    const diaFinSemana: DiaCalendario = {
+      nombreDia: 'Sábado',
+      esFinDeSemana: true,
+      esBloqueadoManual: false,
+    };
+    expect(evaluarDisponibilidadDia(diaFinSemana, agendaSemanal())).toBe(false);
+  });
+});
 
-    expect(evaluarDisponibilidadDia(diaJuevesBloqueado, agendaSemanal)).toBe(false);
+describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-02: Debe deshabilitar un día si el administrador lo configuró como bloqueado', () => {
+  const agendaSemanal = (): AgendaSemanal => ({
+    diasHabilitados: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    antelacionMinimaMinutos: 30,
   });
 
-  // ESCENARIO 3: Validación de antelación mínima de reserva
-  test('CP-008-03: Debe invalidar el día si los turnos rompen el margen de antelación mínima', () => {
-    const agendaSemanal: AgendaSemanal = { Lunes: true };
-    const diaActual: DiaCalendario = { nombreDia: 'Lunes', esBloqueadoManual: false };
-    const antelacionMinimaMinutos = 120; // 2 horas requeridas
-    const turnosDelDia = [{ hora: '11:00' }];
-    const horaActual = '10:00'; // Solo hay 60 minutos de margen
+  test('Debería dar falso si el día está bloqueado manualmente', () => {
+    const diaBloqueado: DiaCalendario = {
+      nombreDia: 'Jueves',
+      esFinDeSemana: false,
+      esBloqueadoManual: true,
+    };
+    expect(evaluarDisponibilidadDia(diaBloqueado, agendaSemanal())).toBe(false);
+  });
+});
 
-    const resultado = evaluarDisponibilidadDia(
-      diaActual,
-      agendaSemanal,
-      turnosDelDia,
-      horaActual,
-      antelacionMinimaMinutos
-    );
+describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-03: Debe invalidar el día si los turnos rompen el margen de antelación mínima', () => {
+  const agendaSemanal = (): AgendaSemanal => ({
+    diasHabilitados: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    antelacionMinimaMinutos: 60, // Requiere 1 hora de anticipación obligatoria
+  });
 
+  test('Debería invalidar el día si el turno está muy encima del límite de antelación', () => {
+    const diaActual: DiaCalendario = {
+      nombreDia: 'Lunes',
+      esFinDeSemana: false,
+      esBloqueadoManual: false,
+    };
+    const turnoCritico = { inicio: '10:00' };
+
+    const resultado = evaluarDisponibilidadDia(diaActual, agendaSemanal(), turnoCritico);
     expect(resultado).toBe(false);
   });
 });
