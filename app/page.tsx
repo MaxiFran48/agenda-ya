@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
+import EliminarTurno from '../components/US_003_eliminarTurno';
 import CalendarioAdmin from '../components/US_005_calendarioAdmin';
 
 export default function Home() {
-  const [selectedUs, setSelectedUs] = useState<'us001' | 'us005' | null>(null);
+  const [selectedUs, setSelectedUs] = useState<'us001' | 'us003' | 'us005' | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
@@ -51,7 +52,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto w-full">
               {/* Recuadro US_001 */}
               <button
                 onClick={() => setSelectedUs('us001')}
@@ -72,6 +73,30 @@ export default function Home() {
                   Como administrador, quiero deshabilitar o habilitar un día de la semana, de modo que pueda gestionar la configuración de turnos de un día sin tener que crearlos desde cero o borrarlos.
                 </p>
                 <span className="mt-auto text-xs font-semibold text-blue-500 group-hover:text-blue-400 flex items-center gap-1.5">
+                  Ver funcionalidad &rarr;
+                </span>
+              </button>
+
+              {/* Recuadro US_003 */}
+              <button
+                onClick={() => setSelectedUs('us003')}
+                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    Épica: CONF_AGENDA
+                  </span>
+                  <span className="text-xs font-bold text-slate-500 group-hover:text-rose-400 transition-colors">
+                    3 SP
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-100 group-hover:text-rose-400 transition-colors">
+                  US_003: Eliminar turno
+                </h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Como administrador, quiero eliminar un turno existente. Si el turno tiene reservas, se muestra una advertencia para cancelar los turnos asociados o descartar los cambios.
+                </p>
+                <span className="mt-auto text-xs font-semibold text-rose-500 group-hover:text-rose-400 flex items-center gap-1.5">
                   Ver funcionalidad &rarr;
                 </span>
               </button>
@@ -115,6 +140,13 @@ export default function Home() {
             <div className="w-full bg-slate-900/40 p-8 rounded-2xl border border-slate-800 backdrop-blur-sm shadow-lg">
               {selectedUs === 'us001' ? (
                 <ConfiguracionSemanal />
+              ) : selectedUs === 'us003' ? (
+                <div className="flex justify-center w-full">
+                  <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Eliminar Turno</h3>
+                    <EliminarTurno turnoInicial={{ id: '1', horario: '09:00 - 10:00', tieneReservas: true }} />
+                  </div>
+                </div>
               ) : (
                 <div className="flex justify-center w-full">
                   <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
