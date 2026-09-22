@@ -1,169 +1,176 @@
 'use client';
 
-import React, { useState } from 'react';
-import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
-import EliminarTurno from '../components/US_003_eliminarTurno';
-import CalendarioAdmin from '../components/US_005_calendarioAdmin';
+import { useState } from 'react';
 
-export default function Home() {
-  const [selectedUs, setSelectedUs] = useState<'us001' | 'us003' | 'us005' | null>(null);
+export default function GestionDisponibilidad() {
+  // --- Estados para Configurar Horario Laboral ---
+  const [dia, setDia] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [errorHorario, setErrorHorario] = useState('');
+  const [exitoHorario, setExitoHorario] = useState('');
+
+  // --- Estados para Bloquear Día ---
+  const [fechaBloqueo, setFechaBloqueo] = useState('');
+  const [errorBloqueo, setErrorBloqueo] = useState('');
+  const [exitoBloqueo, setExitoBloqueo] = useState('');
+
+  // --- Manejadores ---
+  const handleGuardarHorario = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorHorario('');
+    setExitoHorario('');
+
+    if (!dia || !horaInicio || !horaFin) {
+      setErrorHorario('Todos los campos son obligatorios');
+      return;
+    }
+
+    // Aquí iría el guardado real. Lo simulamos con éxito:
+    setExitoHorario('Horario guardado exitosamente');
+    
+    // Limpiamos el formulario
+    setDia('');
+    setHoraInicio('');
+    setHoraFin('');
+  };
+
+  const handleBloquearDia = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorBloqueo('');
+    setExitoBloqueo('');
+
+    if (!fechaBloqueo) {
+      setErrorBloqueo('Debe seleccionar una fecha obligatoriamente');
+      return;
+    }
+
+    // Simulamos el guardado
+    setExitoBloqueo('Día bloqueado exitosamente');
+    
+    // Limpiamos el formulario
+    setFechaBloqueo('');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button 
-            onClick={() => setSelectedUs(null)} 
-            className="flex items-center gap-3 text-left focus:outline-none"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
-              AY
+    <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
+      <div className="max-w-2xl mx-auto space-y-12">
+        <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">
+          Módulo de Gestión de Disponibilidad
+        </h1>
+
+        {/* SECCIÓN 1: CONFIGURAR HORARIO LABORAL */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">1. Configurar horario laboral</h2>
+          
+          <form onSubmit={handleGuardarHorario} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="diaSemana" className="font-medium text-sm text-gray-700">Día de la semana:</label>
+              <select 
+                id="diaSemana"
+                data-cy="select-dia"
+                value={dia}
+                onChange={(e) => setDia(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione un día...</option>
+                <option value="Lunes">Lunes</option>
+                <option value="Martes">Martes</option>
+                <option value="Miércoles">Miércoles</option>
+                <option value="Jueves">Jueves</option>
+                <option value="Viernes">Viernes</option>
+                <option value="Sábado">Sábado</option>
+                <option value="Domingo">Domingo</option>
+              </select>
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
-                AgendaYA
-              </h1>
-              <p className="text-xs text-slate-400 font-medium">Ingeniería y Calidad de Software</p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="horaInicio" className="font-medium text-sm text-gray-700">Hora de inicio:</label>
+                <input 
+                  type="time" 
+                  id="horaInicio"
+                  data-cy="input-hora-inicio"
+                  value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="horaFin" className="font-medium text-sm text-gray-700">Hora de fin:</label>
+                <input 
+                  type="time" 
+                  id="horaFin"
+                  data-cy="input-hora-fin"
+                  value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
             </div>
-          </button>
-          {selectedUs && (
-            <button
-              onClick={() => setSelectedUs(null)}
-              className="text-sm font-semibold text-slate-400 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 hover:bg-slate-800 transition-all"
+
+            {/* Mensajes de feedback Horario */}
+            {errorHorario && (
+              <div data-cy="mensaje-error-horario" className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm">
+                {errorHorario}
+              </div>
+            )}
+            {exitoHorario && (
+              <div data-cy="mensaje-exito-horario" className="text-green-600 bg-green-50 border border-green-200 p-2 rounded text-sm">
+                {exitoHorario}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              data-cy="btn-guardar-horario"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
             >
-              &larr; Volver al panel
+              Guardar Horario
             </button>
-          )}
-        </div>
-      </header>
+          </form>
+        </section>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 flex flex-col justify-center">
-        {selectedUs === null ? (
-          // Grid view of User Stories
-          <div className="flex flex-col gap-10">
-            <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Historias de Usuario del Proyecto
-              </h2>
-              <p className="text-slate-400 text-lg">
-                Selecciona una funcionalidad para interactuar con su componente y ver su comportamiento.
-              </p>
+        {/* SECCIÓN 2: BLOQUEAR UN DÍA */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Bloquear un día</h2>
+          
+          <form onSubmit={handleBloquearDia} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="fechaBloqueo" className="font-medium text-sm text-gray-700">Fecha a bloquear:</label>
+              <input 
+                type="date" 
+                id="fechaBloqueo"
+                data-cy="input-fecha-bloqueo"
+                value={fechaBloqueo}
+                onChange={(e) => setFechaBloqueo(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto w-full">
-              {/* Recuadro US_001 */}
-              <button
-                onClick={() => setSelectedUs('us001')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    Épica: CONF_AGENDA
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-blue-400 transition-colors">
-                    5 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
-                  US_001: Deshabilitar/habilitar días de trabajo
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, quiero deshabilitar o habilitar un día de la semana, de modo que pueda gestionar la configuración de turnos de un día sin tener que crearlos desde cero o borrarlos.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-blue-500 group-hover:text-blue-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
-              </button>
+            {/* Mensajes de feedback Bloqueo */}
+            {errorBloqueo && (
+              <div data-cy="mensaje-error-bloqueo" className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm">
+                {errorBloqueo}
+              </div>
+            )}
+            {exitoBloqueo && (
+              <div data-cy="mensaje-exito-bloqueo" className="text-green-600 bg-green-50 border border-green-200 p-2 rounded text-sm">
+                {exitoBloqueo}
+              </div>
+            )}
 
-              {/* Recuadro US_003 */}
-              <button
-                onClick={() => setSelectedUs('us003')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    Épica: CONF_AGENDA
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-rose-400 transition-colors">
-                    3 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-rose-400 transition-colors">
-                  US_003: Eliminar turno
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, quiero eliminar un turno existente. Si el turno tiene reservas, se muestra una advertencia para cancelar los turnos asociados o descartar los cambios.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-rose-500 group-hover:text-rose-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
-              </button>
+            <button 
+              type="submit"
+              data-cy="btn-guardar-bloqueo"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors"
+            >
+              Bloquear Día
+            </button>
+          </form>
+        </section>
 
-              {/* Recuadro US_005 */}
-              <button
-                onClick={() => setSelectedUs('us005')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                    Épica: BLOQ_DIAS
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-violet-400 transition-colors">
-                    3/5 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-violet-400 transition-colors">
-                  US_005: Seleccionar días para bloquearlos
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, permite seleccionar fechas en el calendario para bloquearlas. Incluye reglas de bloqueo sobre fechas pasadas y confirmación al descartar cambios.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-violet-500 group-hover:text-violet-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          // Simplified Detail View for US Functionality
-          <div className={`flex flex-col items-center gap-6 mx-auto w-full animate-fade-in ${selectedUs === 'us001' ? 'max-w-6xl' : 'max-w-xl'}`}>
-            {/* Small ID Badge above the component */}
-            <div className="text-center">
-              <span className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-slate-900 border border-slate-800 text-blue-400 font-mono tracking-wider shadow-md">
-                {selectedUs.toUpperCase().replace('US', 'US_')}
-              </span>
-            </div>
-
-            {/* Interactive component container */}
-            <div className="w-full bg-slate-900/40 p-8 rounded-2xl border border-slate-800 backdrop-blur-sm shadow-lg">
-              {selectedUs === 'us001' ? (
-                <ConfiguracionSemanal />
-              ) : selectedUs === 'us003' ? (
-                <div className="flex justify-center w-full">
-                  <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Eliminar Turno</h3>
-                    <EliminarTurno turnoInicial={{ id: '1', horario: '09:00 - 10:00', tieneReservas: true }} />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center w-full">
-                  <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Calendario de Administración</h3>
-                    <CalendarioAdmin fechaActual={new Date('2026-06-17')} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/30 py-6 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} UTN - Cátedra de Ingeniería y Calidad de Software.
-      </footer>
+      </div>
     </div>
   );
 }
