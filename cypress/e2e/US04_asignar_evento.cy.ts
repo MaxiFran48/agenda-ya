@@ -1,7 +1,6 @@
 describe('AgendaYA - M02: Asignar Evento a Turno', () => {
   
   beforeEach(() => {
-    // Reemplaza esto con la URL o el archivo local donde está corriendo tu frontend
     cy.visit('http://localhost:3000') 
   })
 

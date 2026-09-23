@@ -63,7 +63,7 @@ export default function GestionDisponibilidad() {
     setResultadoMensaje('');
     setResultadoTipo('');
 
-    if (turnoSeleccionado === '10:30' && duracionEvento === '60') {
+    if (turnoSeleccionado === '10:30' || duracionEvento === '60') {
       setResultadoMensaje('Superposición entre los turnos 10:00 y 10:30');
       setResultadoTipo('error');
     } else {
