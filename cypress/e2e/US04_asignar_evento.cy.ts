@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('AgendaYA - M02: Asignar Evento a Turno', () => {
   
   beforeEach(() => {
