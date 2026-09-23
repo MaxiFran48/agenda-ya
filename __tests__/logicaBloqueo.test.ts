@@ -1,4 +1,4 @@
-import { procesarConfirmacionBloqueo, Turno } from '../src/logicaBloqueo';
+import { procesarConfirmacionBloqueo, Turno } from '../services/logicaBloqueo';
 
 describe('procesarConfirmacionBloqueo', () => {
   const diaPrueba = '20/06/2026';
