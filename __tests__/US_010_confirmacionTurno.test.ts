@@ -61,4 +61,13 @@ describe("Pruebas Unitarias para US_010 - Confirmación de Turno Temporal", () =
     expect(resultado.sesion.confirmadoTemporal).toBe(false);
     expect(resultado.liberarTurno).toBe(true);
   });
+
+// escenario (caso negativo/inactivo)
+  test("CP-010-01B: Debe mantener el botón inactivo si el turno seleccionado no está disponible", () => {
+    const turnoNoDisponible: Turno = { id: "slot-10min", disponible: false };
+    const botonActivo = evaluarEstadoBoton(turnoNoDisponible);
+
+    expect(botonActivo).toBe(false);
+  });
+
 });
