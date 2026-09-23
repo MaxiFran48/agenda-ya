@@ -10,14 +10,6 @@ export interface ResultadoBloqueo {
   exito: boolean;
 }
 
-/**
- * Procesa la acción del modal de bloqueo de días.
- * 
- * @param dia - El día que se está intentando bloquear (ej. '20/06/2026').
- * @param turnosExistentes - Arreglo con los turnos del día.
- * @param accionConfirmada - Booleano que indica si el usuario confirmó el bloqueo.
- * @returns ResultadoBloqueo - Un objeto con los turnos actualizados y un mensaje de estado.
- */
 export function procesarConfirmacionBloqueo(
   dia: string | null | undefined,
   turnosExistentes: Turno[] | null | undefined,
@@ -50,7 +42,6 @@ export function procesarConfirmacionBloqueo(
       exito: true
     };
   } else {
-    // Si se aborta el bloqueo, los turnos quedan intactos
     return {
       turnos: [...turnosExistentes],
       mensaje: 'Acción cancelada. El día no fue bloqueado.',
