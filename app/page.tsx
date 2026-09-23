@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
 import EliminarTurno from '../components/US_003_eliminarTurno';
 import CalendarioAdmin from '../components/US_005_calendarioAdmin';
+import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCalendario';
 
 export default function Home() {
-  const [selectedUs, setSelectedUs] = useState<'us001' | 'us003' | 'us005' | null>(null);
+  const [selectedUs, setSelectedUs] = useState<'us001' | 'us003' | 'us005' | 'us008' | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
@@ -124,6 +125,30 @@ export default function Home() {
                   Ver funcionalidad &rarr;
                 </span>
               </button>
+
+              {/* Recuadro US_008 */}
+              <button
+                onClick={() => setSelectedUs('us008')}
+                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Épica: RESERVAS_PUB
+                  </span>
+                  <span className="text-xs font-bold text-slate-500 group-hover:text-emerald-400 transition-colors">
+                    5 SP
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-100 group-hover:text-emerald-400 transition-colors">
+                  US_008: Visualización de calendario
+                </h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Como invitado, quiero ver los días disponibles en el calendario para seleccionar en qué fecha deseo reservar un turno.
+                </p>
+                <span className="mt-auto text-xs font-semibold text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1.5">
+                  Ver funcionalidad &rarr;
+                </span>
+              </button>
             </div>
           </div>
         ) : (
@@ -147,12 +172,16 @@ export default function Home() {
                     <EliminarTurno turnoInicial={{ id: '1', horario: '09:00 - 10:00', tieneReservas: true }} />
                   </div>
                 </div>
-              ) : (
+              ) : selectedUs === 'us005' ? (
                 <div className="flex justify-center w-full">
                   <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
                     <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Calendario de Administración</h3>
                     <CalendarioAdmin fechaActual={new Date('2026-06-17')} />
                   </div>
+                </div>
+              ) : (
+                <div className="flex justify-center w-full">
+                  <VisualizacionCalendarioPublico />
                 </div>
               )}
             </div>
