@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { procesarConfirmacionBloqueo, Turno } from '../src/logicaBloqueo';
+import { procesarConfirmacionBloqueo, Turno } from '../services/logicaBloqueo';
 
 export default function GestionBloqueos() {
   const diaHardcodeado = '20/06/2026';
