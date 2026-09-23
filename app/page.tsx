@@ -176,7 +176,10 @@ export default function Home() {
                 <div className="flex justify-center w-full">
                   <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
                     <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Calendario de Administración</h3>
-                    <CalendarioAdmin fechaActual={new Date('2026-06-17')} />
+                    <CalendarioAdmin 
+                      fechaActual={new Date('2026-06-17')} 
+                      reservas={[{ id: 1, hora: '10:00', cliente: 'Juan' }]} 
+                    />
                   </div>
                 </div>
               ) : (
