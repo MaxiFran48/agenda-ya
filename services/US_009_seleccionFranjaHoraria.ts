@@ -53,7 +53,6 @@ export function obtenerFranjasDisponibles(
   turnosOcupados: TurnoOcupado[], 
   horaCierre: string
 ): string[] {
-  // Requerir bloques continuos (granularidad de 30 minutos) para cubrir la duración
   const GRANULARIDAD = 30; // minutos
   const bloquesMinutos = bloquesDelDia
     .map(h => {
@@ -70,7 +69,6 @@ export function obtenerFranjasDisponibles(
     const [h, m] = horaInicio.split(':').map(Number);
     const inicioMin = h * 60 + m;
 
-    // Verificar continuidad: deben existir bloques contiguos a paso de GRANULARIDAD
     let continua = true;
     for (let i = 0; i < bloquesNecesarios; i++) {
       if (!bloquesSet.has(inicioMin + i * GRANULARIDAD)) {
@@ -80,7 +78,6 @@ export function obtenerFranjasDisponibles(
     }
     if (!continua) continue;
 
-    // Si es continua, validar solapamientos y cierre
     if (esFranjaValida(horaInicio, duracion, turnosOcupados, horaCierre)) {
       resultado.push(horaInicio);
     }
