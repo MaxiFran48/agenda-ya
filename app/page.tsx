@@ -43,6 +43,10 @@ export default function GestionDisponibilidad() {
   const [diasBloqueados, setDiasBloqueados] = useState<string[]>([]);
   const [mensajeConfirmacion, setMensajeConfirmacion] = useState('');
 
+  const [antelacionHoras, setAntelacionHoras] = useState<number | ''>(0);
+  const [errorAntelacion, setErrorAntelacion] = useState('');
+  const [mensajeExitoAntelacion, setMensajeExitoAntelacion] = useState('');
+
   // --- Estado: navegación del calendario ---
   const ahora = new Date();
   const [mesVista, setMesVista] = useState(
@@ -100,6 +104,18 @@ export default function GestionDisponibilidad() {
     setDiasSeleccionados(descartarSeleccion(diasSeleccionados));
     setMensajeConfirmacion('');
     setErrorBloqueo('');
+  };
+
+  const handleGuardarAntelacion = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorAntelacion('');
+    setMensajeExitoAntelacion('');
+    if (antelacionHoras === '') {
+      setErrorAntelacion('Debe ingresar un valor. Si no desea antelación mínima, ingrese 0.');
+      return;
+    }
+    setMensajeExitoAntelacion('Regla de antelación guardada exitosamente');
+    setTimeout(() => setMensajeExitoAntelacion(''), 5000);
   };
 
   // --- Lógica del calendario ---
@@ -299,6 +315,23 @@ export default function GestionDisponibilidad() {
               {mensajeConfirmacion}
             </div>
           )}
+        </section>
+
+        {/* ── SECCIÓN 3: CONFIGURAR ANTELACIÓN MÍNIMA ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">3. Configurar Antelación Mínima</h2>
+          <form onSubmit={handleGuardarAntelacion} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="antelacion" className="font-medium text-sm text-gray-700">Antelación mínima (en horas):</label>
+              <div className="flex items-center gap-3">
+                <input type="number" id="antelacion" data-cy="input-antelacion-horas" value={antelacionHoras} onChange={(e) => setAntelacionHoras(e.target.value === '' ? '' : Number(e.target.value))} min="0" className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none w-24" />
+                <span className="text-sm font-medium text-gray-600">{antelacionHoras} {antelacionHoras === 1 ? 'hora' : 'horas'}</span>
+              </div>
+            </div>
+            {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
+            {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
+            <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
+          </form>
         </section>
       </div>
     </div>
