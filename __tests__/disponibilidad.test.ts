@@ -3,12 +3,20 @@ import {
   descartarSeleccion,
 } from '../services/disponibilidad';
 
-const HOY = '2025-06-15';
+function getFechaRelativa(diasOffset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + diasOffset);
+  return d.toISOString().slice(0, 10);
+}
+
+const HOY = getFechaRelativa(0);
+const AYER = getFechaRelativa(-1);
+const MANANA = getFechaRelativa(5); // Usamos 5 días a futuro para asegurar seguridad
 
 describe('esFechaValidaParaBloqueo', () => {
   // Caso normal: fecha futura sin reservas → EXITO
   test('retorna EXITO para una fecha futura sin reservas', () => {
-    expect(esFechaValidaParaBloqueo('2025-06-20', false, HOY))
+    expect(esFechaValidaParaBloqueo(MANANA, false, HOY))
       .toEqual({ estado: 'EXITO' });
   });
 
@@ -18,10 +26,16 @@ describe('esFechaValidaParaBloqueo', () => {
       .toEqual({ estado: 'ERROR' });
   });
 
+  // Caso límite: fecha pasada → ERROR
+  test('retorna ERROR cuando la fecha es anterior a hoy', () => {
+    expect(esFechaValidaParaBloqueo(AYER, false, HOY))
+      .toEqual({ estado: 'ERROR' });
+  });
+
   // Caso límite: fecha futura con reservas → REQUIERE_REAGENDAMIENTO
-  test('retorna EXITO para una fecha futura con reservas (flujo CP-006)', () => {
-    expect(esFechaValidaParaBloqueo('2025-06-20', true, HOY))
-      .toEqual({ estado: 'EXITO' });
+  test('retorna REQUIERE_REAGENDAMIENTO para una fecha futura con reservas (flujo CP-006)', () => {
+    expect(esFechaValidaParaBloqueo(MANANA, true, HOY))
+      .toEqual({ estado: 'REQUIERE_REAGENDAMIENTO', urlRedireccion: '/reagendar-turnos' });
   });
 
   // Caso inválido: formato incorrecto → ERROR
@@ -39,6 +53,6 @@ describe('esFechaValidaParaBloqueo', () => {
 
 describe('descartarSeleccion', () => {
   test('retorna un array vacío descartando la selección', () => {
-    expect(descartarSeleccion(['2025-06-20', '2025-06-21'])).toEqual([]);
+    expect(descartarSeleccion([MANANA, getFechaRelativa(6)])).toEqual([]);
   });
 });

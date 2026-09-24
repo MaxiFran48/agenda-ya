@@ -84,6 +84,16 @@ export default function GestionDisponibilidad() {
   const [turnosAfectados, setTurnosAfectados] = useState<TurnoMock[]>([]);
   const [estadoMockTurnos, setEstadoMockTurnos] = useState<TurnoMock[]>(TURNOS_MOCK);
 
+  // --- Estados: Antelación (Sección 4 - US-005) ---
+  const [errorAntelacion, setErrorAntelacion] = useState('');
+  const [mensajeExitoAntelacion, setMensajeExitoAntelacion] = useState('');
+
+  // --- Estados: Asignar Evento a Turno (Sección 5 - US04) ---
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
+  const [duracionEvento, setDuracionEvento] = useState('');
+  const [resultadoMensaje, setResultadoMensaje] = useState('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error'>('success');
+
   // --- Estado: navegación del calendario ---
   const ahora = new Date();
   const [mesVista, setMesVista] = useState(
@@ -185,6 +195,21 @@ export default function GestionDisponibilidad() {
     setDiasSeleccionados(descartarSeleccion(diasSeleccionados));
     setMensajeConfirmacion('');
     setErrorBloqueo('');
+  };
+
+  // --- Manejador: Asignar Evento a Turno (Sección 5) ---
+  const handleAsignarEvento = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResultadoMensaje('');
+    if (!turnoSeleccionado || !duracionEvento) {
+      setResultadoTipo('error');
+      setResultadoMensaje('Debe seleccionar un turno y un tipo de evento.');
+      return;
+    }
+    setResultadoTipo('success');
+    setResultadoMensaje(`Evento de ${duracionEvento} min asignado al turno ${turnoSeleccionado} exitosamente.`);
+    setTurnoSeleccionado('');
+    setDuracionEvento('');
   };
 
   // --- Lógica del calendario ---
@@ -417,26 +442,86 @@ export default function GestionDisponibilidad() {
                   ))}
                 </ul>
               </div>
-
-              <div className="flex gap-3 justify-end">
-                <button 
-                  onClick={handleAbortarBloqueoModal} 
-                  data-cy="btn-abortar-bloqueo"
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors">
-                  Cancelar/Descartar
-                </button>
-                <button 
-                  onClick={handleConfirmarBloqueoModal} 
-                  data-cy="btn-confirmar-bloqueo"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors">
-                  Confirmar
-                </button>
-              </div>
+            {/* Botones del Modal de Confirmación (rama tp6-testing) */}
+            <div className="flex gap-3 justify-end mt-4">
+              <button 
+                type="button"
+                onClick={handleAbortarBloqueoModal} 
+                data-cy="btn-abortar-bloqueo"
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors">
+                Cancelar/Descartar
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirmarBloqueoModal} 
+                data-cy="btn-confirmar-bloqueo"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors">
+                Confirmar
+              </button>
             </div>
           </div>
+        </div>
         )}
 
+      {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
+      <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno</h2>
 
+        <form onSubmit={handleAsignarEvento} className="space-y-4">
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
+            <select
+              id="turnoSeleccionado"
+              data-cy="select-siguiente-turno"
+              value={turnoSeleccionado}
+              onChange={(e) => setTurnoSeleccionado(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione un turno...</option>
+              <option value="10:00">10:00</option>
+              <option value="10:30">10:30</option>
+              <option value="11:00">11:00</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
+            <select
+              id="duracionEvento"
+              data-cy="select-tipo-evento"
+              value={duracionEvento}
+              onChange={(e) => setDuracionEvento(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione duración...</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+
+          {/* Mensajes de feedback Asignar Evento */}
+          {resultadoMensaje && (
+            <div
+              data-cy="mensaje-resultado"
+              className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
+                  ? 'text-green-600 bg-green-50 border-green-200'
+                  : 'text-red-600 bg-red-50 border-red-200'
+                }`}
+            >
+              {resultadoMensaje}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            data-cy="btn-guardar"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          >
+            Guardar Evento
+          </button>
+        </form>
+      </section>
 
         {/* ── SECCIÓN 6: VISUALIZACIÓN DE CALENDARIO (US_008) ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
