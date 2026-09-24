@@ -39,4 +39,18 @@ describe('US_004: Agregar/quitar tipos de eventos de turno en día de trabajo (C
       .and('have.class', 'error')
       .and('contain', 'Superposición entre los turnos 10:00 y 10:30')
   })
+
+  it('Error al guardar si falta completar un campo (Validación)', () => {
+    // Arrange: Dejamos el tipo de evento vacío, solo seleccionamos el turno
+    cy.get('[data-cy="select-siguiente-turno"]').select('11:00')
+
+    // Act: intentamos guardar
+    cy.get('[data-cy="btn-guardar"]').click()
+
+    // Assert: el mensaje de validación debe aparecer
+    cy.get('[data-cy="mensaje-resultado"]')
+      .should('be.visible')
+      .and('have.class', 'error')
+      .and('contain', 'Debe seleccionar el siguiente turno y el tipo de evento')
+  })
 })

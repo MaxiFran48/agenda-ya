@@ -154,6 +154,12 @@ export default function GestionDisponibilidad() {
     setResultadoMensaje('');
     setResultadoTipo('');
 
+    if (!turnoSeleccionado || !duracionEvento) {
+      setResultadoMensaje('Debe seleccionar el siguiente turno y el tipo de evento');
+      setResultadoTipo('error');
+      return;
+    }
+
     if (turnoSeleccionado === '10:30' || duracionEvento === '60') {
       setResultadoMensaje('Superposición entre los turnos 10:00 y 10:30');
       setResultadoTipo('error');
