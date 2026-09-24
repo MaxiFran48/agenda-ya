@@ -2,26 +2,34 @@
 
 import React, { useState } from 'react';
 import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
-import GestionDiaTrabajo from './US_001_gestionDiaTrabajo';
+import GestionDiaTrabajo, { Turno } from './US_001_gestionDiaTrabajo';
 
-interface DayConfig {
+export interface DayConfig {
   diaSemana: string;
   habilitado: boolean;
   guardadoHabilitado: boolean;
   tieneReservas: boolean;
+  turnos: Turno[];
 }
 
-export default function ConfiguracionSemanal() {
-  const [dias, setDias] = useState<DayConfig[]>([
-    { diaSemana: 'Lunes', habilitado: true, guardadoHabilitado: true, tieneReservas: true },
-    { diaSemana: 'Martes', habilitado: true, guardadoHabilitado: true, tieneReservas: false },
-    { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true },
-    { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false },
-    { diaSemana: 'Viernes', habilitado: true, guardadoHabilitado: true, tieneReservas: true },
-    { diaSemana: 'Sábado', habilitado: false, guardadoHabilitado: false, tieneReservas: false },
-    { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false },
-  ]);
+function crearDiasIniciales(): DayConfig[] {
+  return [
+    { diaSemana: 'Lunes', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
+    { diaSemana: 'Martes', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+    { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
+    { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+    { diaSemana: 'Viernes', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
+    { diaSemana: 'Sábado', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+    { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  ];
+}
 
+export default function ConfiguracionSemanal({
+  diasIniciales,
+}: {
+  diasIniciales?: DayConfig[];
+}) {
+  const [dias, setDias] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
   const [mensaje, setMensaje] = useState('');
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
@@ -30,6 +38,30 @@ export default function ConfiguracionSemanal() {
     const nuevosDias = [...dias];
     nuevosDias[index].habilitado = !nuevosDias[index].habilitado;
     setDias(nuevosDias);
+  };
+
+  const handleAgregarTurno = (dia: string, horaInicio: string, horaFin: string) => {
+    setDias(
+      dias.map((d) =>
+        d.diaSemana === dia
+          ? {
+              ...d,
+              turnos: [
+                ...d.turnos,
+                { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, horaInicio, horaFin },
+              ],
+            }
+          : d
+      )
+    );
+  };
+
+  const handleEliminarTurno = (dia: string, id: string) => {
+    setDias(
+      dias.map((d) =>
+        d.diaSemana === dia ? { ...d, turnos: d.turnos.filter((t) => t.id !== id) } : d
+      )
+    );
   };
 
   const handleGuardar = async () => {
@@ -60,7 +92,7 @@ export default function ConfiguracionSemanal() {
       // Actualizar estado guardado
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
       setMensaje(cambiosRealizados ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
-    } catch (error) {
+    } catch {
       setMensaje('Error al guardar los cambios');
     }
   };
@@ -78,10 +110,10 @@ export default function ConfiguracionSemanal() {
 
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
       setMostrarAdvertencia(false);
-      
+
       const listaDias = diasConAdvertencia.join(', ');
       setMensaje(`Reservas para el día ${listaDias} canceladas`);
-    } catch (error) {
+    } catch {
       setMensaje('Error al cancelar reservas');
     }
   };
@@ -105,8 +137,10 @@ export default function ConfiguracionSemanal() {
             key={d.diaSemana}
             diaSemana={d.diaSemana}
             habilitado={d.habilitado}
-            guardadoHabilitado={d.guardadoHabilitado}
             onToggle={() => handleToggle(index)}
+            turnos={d.turnos}
+            onAgregarTurno={handleAgregarTurno}
+            onEliminarTurno={handleEliminarTurno}
           />
         ))}
       </div>
@@ -120,6 +154,7 @@ export default function ConfiguracionSemanal() {
           <button
             type="button"
             data-testid="btn-descartar-global"
+            data-cy="btn-descartar-global"
             onClick={handleDescartarCambios}
             className="px-4 py-2 border border-slate-700 text-slate-300 rounded-lg text-sm font-semibold hover:border-slate-600 hover:bg-slate-800 transition active:scale-95"
           >
@@ -128,6 +163,7 @@ export default function ConfiguracionSemanal() {
           <button
             type="button"
             data-testid="btn-guardar-global"
+            data-cy="btn-guardar-global"
             onClick={handleGuardar}
             className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition active:scale-95 shadow-md shadow-green-600/10"
           >
@@ -137,7 +173,11 @@ export default function ConfiguracionSemanal() {
       </div>
 
       {mensaje && (
-        <div data-testid="mensaje-alerta-global" className="text-sm font-semibold p-3 rounded-lg bg-slate-900 text-slate-200 text-center border border-slate-800 shadow">
+        <div
+          data-testid="mensaje-alerta-global"
+          data-cy="mensaje-alerta-global"
+          className="text-sm font-semibold p-3 rounded-lg bg-slate-900 text-slate-200 text-center border border-slate-800 shadow"
+        >
           {mensaje}
         </div>
       )}
@@ -146,6 +186,7 @@ export default function ConfiguracionSemanal() {
       {mostrarAdvertencia && (
         <div
           data-testid="advertencia-reservas-global"
+          data-cy="advertencia-reservas-global"
           className="p-5 border border-red-500/20 bg-red-950/20 rounded-xl text-red-200 mt-4 animate-fade-in"
         >
           <p className="text-sm font-medium mb-4">
@@ -155,6 +196,7 @@ export default function ConfiguracionSemanal() {
             <button
               type="button"
               data-testid="btn-confirmar-cancelar-global"
+              data-cy="btn-confirmar-cancelar-global"
               onClick={handleConfirmarCancelar}
               className="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-red-700 transition active:scale-95"
             >
@@ -163,6 +205,7 @@ export default function ConfiguracionSemanal() {
             <button
               type="button"
               data-testid="btn-confirmar-descartar-global"
+              data-cy="btn-confirmar-descartar-global"
               onClick={handleDescartarCambios}
               className="bg-slate-800 border border-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-slate-700 transition active:scale-95"
             >

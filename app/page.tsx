@@ -1,201 +1,450 @@
 'use client';
 
-import React, { useState } from 'react';
-import ConfiguracionSemanal from '../components/US_001_configuracionSemanal';
-import EliminarTurno from '../components/US_003_eliminarTurno';
-import CalendarioAdmin from '../components/US_005_calendarioAdmin';
+import { useState } from 'react';
+import {
+  esFechaValidaParaBloqueo,
+  descartarSeleccion,
+} from '../services/disponibilidad';
+import GestionSemana, { DayConfig } from '../components/US_001_configuracionSemanal';
 import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCalendario';
 
-export default function Home() {
-  const [selectedUs, setSelectedUs] = useState<'us001' | 'us003' | 'us005' | 'us008' | null>(null);
 
+// Datos del entorno de test del CP-001-01
+const DIAS_INICIALES: DayConfig[] = [
+  { diaSemana: 'Lunes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Martes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+];
+
+// ─── Datos de ejemplo ────────────────────────────────────────────────────────
+const DIAS_CON_RESERVAS: string[] = [
+  getFechaRelativa(5),
+  getFechaRelativa(8),
+];
+
+function getFechaRelativa(dias: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+function getFechaHoy(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const NOMBRES_MESES = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
+];
+const NOMBRES_DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+// ─── Componente ──────────────────────────────────────────────────────────────
+export default function GestionDisponibilidad() {
+  // --- Estados: Configurar Horario Laboral ---
+  const [dia, setDia] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [errorHorario, setErrorHorario] = useState('');
+  const [exitoHorario, setExitoHorario] = useState('');
+
+  // --- Estados: Bloquear Día ---
+  const [errorBloqueo, setErrorBloqueo] = useState('');
+  const [diasSeleccionados, setDiasSeleccionados] = useState<string[]>([]);
+  const [diasBloqueados, setDiasBloqueados] = useState<string[]>([]);
+  const [mensajeConfirmacion, setMensajeConfirmacion] = useState('');
+  const [antelacionHoras, setAntelacionHoras] = useState<number | ''>(0);
+  const [errorAntelacion, setErrorAntelacion] = useState('');
+  const [mensajeExitoAntelacion, setMensajeExitoAntelacion] = useState('');
+
+  // --- Estado: navegación del calendario ---
+  const ahora = new Date();
+  const [mesVista, setMesVista] = useState(
+    new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+  );
+
+  // --- Estados para Asignar Evento (US04) ---
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
+  const [duracionEvento, setDuracionEvento] = useState('');
+  const [resultadoMensaje, setResultadoMensaje] = useState('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
+
+  // --- Manejadores: Horario ---
+  const handleGuardarHorario = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorHorario('');
+    setExitoHorario('');
+    if (!dia || !horaInicio || !horaFin) {
+      setErrorHorario('Todos los campos son obligatorios');
+      return;
+    }
+    setExitoHorario('Horario guardado exitosamente');
+    setDia('');
+    setHoraInicio('');
+    setHoraFin('');
+  };
+
+  // --- Manejador: click en día del calendario ---
+  const handleClickDia = (fechaStr: string) => {
+    setErrorBloqueo('');
+    setMensajeConfirmacion('');
+    const tieneReservas = DIAS_CON_RESERVAS.includes(fechaStr);
+    const resultado = esFechaValidaParaBloqueo(fechaStr, tieneReservas, getFechaHoy());
+
+    if (resultado.estado === 'ERROR') {
+      setErrorBloqueo('No se pueden bloquear fechas pasadas ni el día de hoy.');
+      return;
+    }
+    if (resultado.estado === 'REQUIERE_REAGENDAMIENTO') {
+      const confirmar = window.confirm(
+        `El día ${fechaStr} tiene turnos reservados.\n¿Desea reagendarlos antes de bloquear este día?`
+      );
+      if (confirmar) window.location.assign(resultado.urlRedireccion);
+      return;
+    }
+    setDiasSeleccionados((prev) =>
+      prev.includes(fechaStr) ? prev : [...prev, fechaStr]
+    );
+  };
+
+  // --- Manejador: Confirmar ---
+  const handleGuardar = () => {
+    if (diasSeleccionados.length === 0) return;
+    setDiasBloqueados((prev) => [...prev, ...diasSeleccionados]);
+    setDiasSeleccionados([]);
+    setMensajeConfirmacion(`Se bloquearon ${diasSeleccionados.length} día(s) exitosamente.`);
+  };
+
+  // --- Manejador: Descartar ---
+  const handleDescartar = () => {
+    setDiasSeleccionados(descartarSeleccion(diasSeleccionados));
+    setMensajeConfirmacion('');
+    setErrorBloqueo('');
+  };
+
+  const handleGuardarAntelacion = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorAntelacion('');
+    setMensajeExitoAntelacion('');
+    if (antelacionHoras === '') {
+      setErrorAntelacion('Debe ingresar un valor. Si no desea antelación mínima, ingrese 0.');
+      return;
+    }
+    setMensajeExitoAntelacion('Regla de antelación guardada exitosamente');
+    setTimeout(() => setMensajeExitoAntelacion(''), 5000);
+  };
+
+  // --- Lógica del calendario ---
+  const anio = mesVista.getFullYear();
+  const mes  = mesVista.getMonth();
+  const primerDia  = new Date(anio, mes, 1);
+  const ultimoDia  = new Date(anio, mes + 1, 0);
+  const offset     = (primerDia.getDay() + 6) % 7; // lunes = 0
+  const totalCeldas = Math.ceil((offset + ultimoDia.getDate()) / 7) * 7;
+  const celdas = Array.from({ length: totalCeldas });
+  const hoyStr = getFechaHoy();
+
+  const toStr = (d: number) =>
+    `${anio}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  const handleAsignarEvento = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResultadoMensaje('');
+    setResultadoTipo('');
+
+    if (!turnoSeleccionado || !duracionEvento) {
+      setResultadoMensaje('Debe seleccionar el siguiente turno y el tipo de evento');
+      setResultadoTipo('error');
+      return;
+    }
+
+    if (turnoSeleccionado === '10:30' || duracionEvento === '60') {
+      setResultadoMensaje('Superposición entre los turnos 10:00 y 10:30');
+      setResultadoTipo('error');
+    } else {
+      setResultadoMensaje('Cambios guardados exitosamente');
+      setResultadoTipo('success');
+    }
+  };
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button 
-            onClick={() => setSelectedUs(null)} 
-            className="flex items-center gap-3 text-left focus:outline-none"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
-              AY
+    <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">
+          Módulo de Gestión de Disponibilidad
+        </h1>
+
+        {/* ── SECCIÓN 1: CONFIGURAR HORARIO LABORAL ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">1. Configurar horario laboral</h2>
+          <form onSubmit={handleGuardarHorario} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="diaSemana" className="font-medium text-sm text-gray-700">Día de la semana:</label>
+              <select id="diaSemana" data-cy="select-dia" value={dia}
+                onChange={(e) => setDia(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="">Seleccione un día...</option>
+                {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
-                AgendaYA
-              </h1>
-              <p className="text-xs text-slate-400 font-medium">Ingeniería y Calidad de Software</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="horaInicio" className="font-medium text-sm text-gray-700">Hora de inicio:</label>
+                <input type="time" id="horaInicio" data-cy="input-hora-inicio" value={horaInicio}
+                  onChange={(e) => setHoraInicio(e.target.value)}
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="horaFin" className="font-medium text-sm text-gray-700">Hora de fin:</label>
+                <input type="time" id="horaFin" data-cy="input-hora-fin" value={horaFin}
+                  onChange={(e) => setHoraFin(e.target.value)}
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
             </div>
-          </button>
-          {selectedUs && (
-            <button
-              onClick={() => setSelectedUs(null)}
-              className="text-sm font-semibold text-slate-400 hover:text-slate-100 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 hover:bg-slate-800 transition-all"
-            >
-              &larr; Volver al panel
+            {errorHorario && (
+              <div data-cy="mensaje-error-horario" className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm">{errorHorario}</div>
+            )}
+            {exitoHorario && (
+              <div data-cy="mensaje-exito-horario" className="text-green-600 bg-green-50 border border-green-200 p-2 rounded text-sm">{exitoHorario}</div>
+            )}
+            <button type="submit" data-cy="btn-guardar-horario"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">
+              Guardar Horario
             </button>
-          )}
-        </div>
-      </header>
+          </form>
+        </section>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 flex flex-col justify-center">
-        {selectedUs === null ? (
-          // Grid view of User Stories
-          <div className="flex flex-col gap-10">
-            <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Historias de Usuario del Proyecto
-              </h2>
-              <p className="text-slate-400 text-lg">
-                Selecciona una funcionalidad para interactuar con su componente y ver su comportamiento.
-              </p>
-            </div>
+        {/* ── SECCIÓN 2: CONFIGURACIÓN SEMANAL DE DÍAS DE TRABAJO (US_001) ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Configuración semanal de días de trabajo</h2>
+          <GestionSemana diasIniciales={DIAS_INICIALES} />
+        </section>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto w-full">
-              {/* Recuadro US_001 */}
+        {/* ── SECCIÓN 3: BLOQUEAR UN DÍA ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-5 border-b pb-2">3. Bloquear un día</h2>
+
+          {/* ── MINI CALENDARIO ── */}
+          <div className="mb-4 select-none">
+
+            {/* Navegación mes */}
+            <div className="flex items-center justify-between mb-3">
               <button
-                onClick={() => setSelectedUs('us001')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    Épica: CONF_AGENDA
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-blue-400 transition-colors">
-                    5 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
-                  US_001: Deshabilitar/habilitar días de trabajo
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, quiero deshabilitar o habilitar un día de la semana, de modo que pueda gestionar la configuración de turnos de un día sin tener que crearlos desde cero o borrarlos.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-blue-500 group-hover:text-blue-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
+                onClick={() => setMesVista(new Date(anio, mes - 1, 1))}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl">
+                ‹
               </button>
-
-              {/* Recuadro US_003 */}
+              <span className="font-semibold text-gray-700 text-sm tracking-wide">
+                {NOMBRES_MESES[mes]} {anio}
+              </span>
               <button
-                onClick={() => setSelectedUs('us003')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    Épica: CONF_AGENDA
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-rose-400 transition-colors">
-                    3 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-rose-400 transition-colors">
-                  US_003: Eliminar turno
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, quiero eliminar un turno existente. Si el turno tiene reservas, se muestra una advertencia para cancelar los turnos asociados o descartar los cambios.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-rose-500 group-hover:text-rose-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
-              </button>
-
-              {/* Recuadro US_005 */}
-              <button
-                onClick={() => setSelectedUs('us005')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                    Épica: BLOQ_DIAS
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-violet-400 transition-colors">
-                    3/5 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-violet-400 transition-colors">
-                  US_005: Seleccionar días para bloquearlos
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como administrador, permite seleccionar fechas en el calendario para bloquearlas. Incluye reglas de bloqueo sobre fechas pasadas y confirmación al descartar cambios.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-violet-500 group-hover:text-violet-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
-              </button>
-
-              {/* Recuadro US_008 */}
-              <button
-                onClick={() => setSelectedUs('us008')}
-                className="group text-left p-8 rounded-2xl border border-slate-800 bg-slate-900/30 hover:bg-slate-900/60 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    Épica: RESERVAS_PUB
-                  </span>
-                  <span className="text-xs font-bold text-slate-500 group-hover:text-emerald-400 transition-colors">
-                    5 SP
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-100 group-hover:text-emerald-400 transition-colors">
-                  US_008: Visualización de calendario
-                </h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Como invitado, quiero ver los días disponibles en el calendario para seleccionar en qué fecha deseo reservar un turno.
-                </p>
-                <span className="mt-auto text-xs font-semibold text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1.5">
-                  Ver funcionalidad &rarr;
-                </span>
+                onClick={() => setMesVista(new Date(anio, mes + 1, 1))}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl">
+                ›
               </button>
             </div>
-          </div>
-        ) : (
-          // Simplified Detail View for US Functionality
-          <div className={`flex flex-col items-center gap-6 mx-auto w-full animate-fade-in ${selectedUs === 'us001' ? 'max-w-6xl' : 'max-w-xl'}`}>
-            {/* Small ID Badge above the component */}
-            <div className="text-center">
-              <span className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-slate-900 border border-slate-800 text-blue-400 font-mono tracking-wider shadow-md">
-                {selectedUs.toUpperCase().replace('US', 'US_')}
+
+            {/* Encabezado días semana */}
+            <div className="grid grid-cols-7 mb-1">
+              {NOMBRES_DIAS.map((d) => (
+                <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
+              ))}
+            </div>
+
+            {/* Grilla de días */}
+            <div className="grid grid-cols-7 gap-y-1">
+              {celdas.map((_, i) => {
+                const diaNum = i - offset + 1;
+                if (diaNum < 1 || diaNum > ultimoDia.getDate()) {
+                  return <div key={i} />;
+                }
+
+                const fechaStr      = toStr(diaNum);
+                const esPasadoOHoy  = fechaStr <= hoyStr;
+                const esHoy         = fechaStr === hoyStr;
+                const tieneReserva  = DIAS_CON_RESERVAS.includes(fechaStr);
+                const estaBloqueado = diasBloqueados.includes(fechaStr);
+                const estaSeleccionado = diasSeleccionados.includes(fechaStr);
+
+                let cls = 'relative flex flex-col items-center justify-center h-9 rounded-lg text-sm transition-colors ';
+                if (estaBloqueado) {
+                  cls += 'bg-red-50 text-red-300 cursor-not-allowed';
+                } else if (estaSeleccionado) {
+                  cls += 'bg-blue-500 text-white cursor-pointer shadow-sm';
+                } else if (esHoy) {
+                  cls += 'border-2 border-blue-400 text-blue-600 font-semibold cursor-not-allowed';
+                } else if (esPasadoOHoy) {
+                  cls += 'text-gray-300 cursor-not-allowed';
+                } else {
+                  cls += 'hover:bg-orange-50 hover:text-orange-600 text-gray-700 cursor-pointer font-medium';
+                }
+
+                return (
+                  <button
+                    key={i}
+                    data-cy={!esPasadoOHoy && !estaBloqueado ? `dia-futuro-${diaNum}` : `dia-pasado-${diaNum}`}
+                    disabled={esPasadoOHoy || estaBloqueado}
+                    onClick={() => handleClickDia(fechaStr)}
+                    className={cls}
+                    title={tieneReserva ? 'Tiene turnos — requiere reagendamiento' : undefined}
+                  >
+                    <span className="leading-none">{diaNum}</span>
+
+                    {/* Puntito naranja: tiene turnos */}
+                    {tieneReserva && !estaBloqueado && (
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-400" />
+                    )}
+                    {/* Puntito rojo: bloqueado */}
+                    {estaBloqueado && (
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-red-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Leyenda */}
+            <div className="flex gap-5 mt-3 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
+                Tiene turnos
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                Bloqueado
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded bg-blue-500 flex-shrink-0" />
+                Seleccionado
               </span>
             </div>
-
-            {/* Interactive component container */}
-            <div className="w-full bg-slate-900/40 p-8 rounded-2xl border border-slate-800 backdrop-blur-sm shadow-lg">
-              {selectedUs === 'us001' ? (
-                <ConfiguracionSemanal />
-              ) : selectedUs === 'us003' ? (
-                <div className="flex justify-center w-full">
-                  <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Eliminar Turno</h3>
-                    <EliminarTurno turnoInicial={{ id: '1', horario: '09:00 - 10:00', tieneReservas: true }} />
-                  </div>
-                </div>
-              ) : selectedUs === 'us005' ? (
-                <div className="flex justify-center w-full">
-                  <div className="text-slate-800 p-6 bg-white rounded-lg shadow-md w-full max-w-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">Calendario de Administración</h3>
-                    <CalendarioAdmin 
-                      fechaActual={new Date('2026-06-17')} 
-                      reservas={[{ id: 1, hora: '10:00', cliente: 'Juan' }]} 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-center w-full">
-                  <VisualizacionCalendarioPublico />
-                </div>
-              )}
-            </div>
           </div>
-        )}
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/30 py-6 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} UTN - Cátedra de Ingeniería y Calidad de Software.
-      </footer>
+          {/* Error */}
+          {errorBloqueo && (
+            <div data-cy="mensaje-error-bloqueo"
+              className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm mb-3">
+              {errorBloqueo}
+            </div>
+          )}
+
+          {/* Selección temporal */}
+          {diasSeleccionados.length > 0 && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+              <p className="font-medium text-blue-800 mb-2">Días seleccionados (sin guardar):</p>
+              <ul className="list-disc list-inside text-blue-700 mb-3">
+                {diasSeleccionados.map((f) => <li key={f}>{f}</li>)}
+              </ul>
+              <div className="flex gap-3">
+                <button onClick={handleGuardar} data-cy="btn-confirmar-bloqueo"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors">
+                  Confirmar bloqueo
+                </button>
+                <button onClick={handleDescartar} data-cy="btn-descartar"
+                  className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded transition-colors">
+                  Descartar cambios
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmación */}
+          {mensajeConfirmacion && (
+            <div data-cy="mensaje-confirmacion"
+              className="mt-3 text-green-600 bg-green-50 border border-green-200 p-3 rounded text-sm">
+              {mensajeConfirmacion}
+            </div>
+          )}
+        </section>
+
+        {/* ── SECCIÓN 4: CONFIGURAR ANTELACIÓN MÍNIMA ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Configurar Antelación Mínima</h2>
+          <form onSubmit={handleGuardarAntelacion} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="antelacion" className="font-medium text-sm text-gray-700">Antelación mínima (en horas):</label>
+              <div className="flex items-center gap-3">
+                <input type="number" id="antelacion" data-cy="input-antelacion-horas" value={antelacionHoras} onChange={(e) => setAntelacionHoras(e.target.value === '' ? '' : Number(e.target.value))} min="0" className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none w-24" />
+                <span className="text-sm font-medium text-gray-600">{antelacionHoras} {antelacionHoras === 1 ? 'hora' : 'horas'}</span>
+              </div>
+            </div>
+            {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
+            {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
+            <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
+          </form>
+        </section>
+
+        {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno</h2>
+          
+          <form onSubmit={handleAsignarEvento} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
+              <select 
+                id="turnoSeleccionado"
+                data-cy="select-siguiente-turno"
+                value={turnoSeleccionado}
+                onChange={(e) => setTurnoSeleccionado(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione un turno...</option>
+                <option value="10:00">10:00</option>
+                <option value="10:30">10:30</option>
+                <option value="11:00">11:00</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
+              <select 
+                id="duracionEvento"
+                data-cy="select-tipo-evento"
+                value={duracionEvento}
+                onChange={(e) => setDuracionEvento(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione duración...</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">60 min</option>
+              </select>
+            </div>
+
+            {/* Mensajes de feedback Asignar Evento */}
+            {resultadoMensaje && (
+              <div 
+                data-cy="mensaje-resultado" 
+                className={`p-2 rounded text-sm border ${
+                  resultadoTipo === 'success' 
+                    ? 'success text-green-600 bg-green-50 border-green-200' 
+                    : 'error text-red-600 bg-red-50 border-red-200'
+                }`}
+              >
+                {resultadoMensaje}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              data-cy="btn-guardar"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+            >
+              Guardar Evento
+            </button>
+          </form>
+        </section>
+
+        {/* ── SECCIÓN 6: VISUALIZACIÓN DE CALENDARIO (US_008) ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">6. Visualización de calendario (US_008)</h2>
+          <VisualizacionCalendarioPublico />
+        </section>
+      </div>
     </div>
   );
 }

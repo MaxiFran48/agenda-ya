@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["es2015", "dom"],
+    "types": ["cypress"],
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "strict": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}
