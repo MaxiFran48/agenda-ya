@@ -14,7 +14,16 @@ import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCa
 const DIAS_INICIALES: DayConfig[] = [
   { diaSemana: 'Lunes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Martes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [
+    {
+      id: 't-mock-1',
+      horaInicio: '09:00',
+      horaFin: '11:00',
+      eventos: [
+        { id: '3', nombre: 'Consulta Larga', duracion: 60 }
+      ]
+    }
+  ] },
   { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
   { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
