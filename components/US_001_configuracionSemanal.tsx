@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
+import { obtenerReservasPorTipoEvento } from '../services/agendaService';
 import GestionDiaTrabajo, { Turno } from './US_001_gestionDiaTrabajo';
 
 function aMinutos(hora: string): number {
@@ -34,15 +35,30 @@ export default function ConfiguracionSemanal({
 }: {
   diasIniciales?: DayConfig[];
 }) {
-  const [dias, setDias] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
+  const [diasGuardados, setDiasGuardados] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
+  const [dias, setDias] = useState<DayConfig[]>(() => JSON.parse(JSON.stringify(diasGuardados)));
   const [mensaje, setMensaje] = useState('');
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
+  
+  const [eventosAEliminar, setEventosAEliminar] = useState<{dia: string, idTurno: string, idEvento: string, nombre: string}[]>([]);
+  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<{dia: string, idTurno: string, nombre: string}[]>([]);
+  
+  const [reservasMock] = useState<any[]>([
+    { id: 1, idTurno: 't-mock-1', tipoEvento: 'Consulta Larga', estado: 'Activa' },
+  ]);
+
+  // Mocks de tipos de eventos predefinidos
+  const TIPOS_EVENTO_MOCK = [
+    { id: '1', nombre: 'Consulta General', duracion: 45 },
+    { id: '2', nombre: 'Revisión', duracion: 30 },
+    { id: '3', nombre: 'Consulta Larga', duracion: 60 },
+    { id: '4', nombre: 'Operación Menor', duracion: 120 },
+  ];
 
   // Estados para Asignar Eventos a Turnos
   const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
-  const [nombreEvento, setNombreEvento] = useState('');
-  const [duracionEvento, setDuracionEvento] = useState('');
+  const [tipoEventoSeleccionado, setTipoEventoSeleccionado] = useState('');
   const [resultadoMensaje, setResultadoMensaje] = useState('');
   const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
 
@@ -80,16 +96,36 @@ export default function ConfiguracionSemanal({
     }
   };
 
+  const handleEliminarEvento = (dia: string, idTurno: string, idEvento: string, nombre: string) => {
+    setEventosAEliminar(prev => [...prev, { dia, idTurno, idEvento, nombre }]);
+    setDias(
+      dias.map((d) =>
+        d.diaSemana === dia ? {
+          ...d,
+          turnos: d.turnos.map((t) =>
+            t.id === idTurno ? {
+              ...t,
+              eventos: t.eventos?.filter(e => e.id !== idEvento)
+            } : t
+          )
+        } : d
+      )
+    );
+  };
+
   const handleAsignarEvento = (e: React.FormEvent) => {
     e.preventDefault();
     setResultadoMensaje('');
     setResultadoTipo('');
 
-    if (!turnoSeleccionado || !nombreEvento || !duracionEvento) {
-      setResultadoMensaje('Debe completar todos los campos (turno, nombre y duración)');
+    if (!turnoSeleccionado || !tipoEventoSeleccionado) {
+      setResultadoMensaje('Debe seleccionar el turno y el tipo de evento');
       setResultadoTipo('error');
       return;
     }
+
+    const eventoMock = TIPOS_EVENTO_MOCK.find(e => e.id === tipoEventoSeleccionado);
+    if (!eventoMock) return;
 
     let diaIndex = -1;
     let turnoIndex = -1;
@@ -110,7 +146,7 @@ export default function ConfiguracionSemanal({
     // Validar superposición por duración
     const duracionTurno = aMinutos(turno.horaFin) - aMinutos(turno.horaInicio);
     const duracionOcupada = (turno.eventos || []).reduce((acc, e) => acc + e.duracion, 0);
-    const duracionNueva = Number(duracionEvento);
+    const duracionNueva = eventoMock.duracion;
 
     if (duracionOcupada + duracionNueva > duracionTurno) {
       setResultadoMensaje(`La duración excede el turno y se superpone con el siguiente.`);
@@ -122,28 +158,33 @@ export default function ConfiguracionSemanal({
     
     turno.eventos.push({
       id: `${Date.now()}`,
-      nombre: nombreEvento,
-      duracion: Number(duracionEvento)
+      nombre: eventoMock.nombre,
+      duracion: eventoMock.duracion
     });
 
     setDias(nuevosDias);
-    setResultadoMensaje(`Evento "${nombreEvento}" asignado exitosamente`);
+    setResultadoMensaje(`Evento "${eventoMock.nombre}" asignado exitosamente`);
     setResultadoTipo('success');
-    setNombreEvento('');
-    setDuracionEvento('');
+    setTipoEventoSeleccionado('');
   };
 
   const handleGuardar = async () => {
     setMensaje('');
     setDiasConAdvertencia([]);
+    setEventosConAdvertencia([]);
 
     // Encontrar días que se están deshabilitando y tienen reservas
     const conflictivos = dias.filter(
       (d) => !d.habilitado && d.guardadoHabilitado && d.tieneReservas
     );
+    
+    const eventosConflictivos = eventosAEliminar.filter(ev => 
+      obtenerReservasPorTipoEvento(ev.idTurno, ev.nombre, reservasMock).length > 0
+    );
 
-    if (conflictivos.length > 0) {
+    if (conflictivos.length > 0 || eventosConflictivos.length > 0) {
       setDiasConAdvertencia(conflictivos.map((c) => c.diaSemana));
+      setEventosConAdvertencia(eventosConflictivos);
       setMostrarAdvertencia(true);
       return;
     }
@@ -159,8 +200,10 @@ export default function ConfiguracionSemanal({
       }
 
       // Actualizar estado guardado
+      setDiasGuardados(JSON.parse(JSON.stringify(dias)));
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
-      setMensaje(cambiosRealizados ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
+      setEventosAEliminar([]);
+      setMensaje(cambiosRealizados || eventosAEliminar.length > 0 ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
     } catch {
       setMensaje('Error al guardar los cambios');
     }
@@ -177,20 +220,31 @@ export default function ConfiguracionSemanal({
         }
       }
 
+      setDiasGuardados(JSON.parse(JSON.stringify(dias)));
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
       setMostrarAdvertencia(false);
+      setEventosAEliminar([]);
 
-      const listaDias = diasConAdvertencia.join(', ');
-      setMensaje(`Reservas para el día ${listaDias} canceladas`);
+      let msg = '';
+      if (diasConAdvertencia.length > 0) msg += `Reservas para el día ${diasConAdvertencia.join(', ')} canceladas. `;
+      if (eventosConAdvertencia.length > 0) {
+        eventosConAdvertencia.forEach(e => {
+          msg += `Reservas del tipo de evento ${e.nombre} para el día ${e.dia} canceladas. `;
+        });
+      }
+      setMensaje(msg.trim());
     } catch {
       setMensaje('Error al cancelar reservas');
     }
   };
 
   const handleDescartarCambios = () => {
-    // Revertir estado de habilitación al estado guardado anterior
-    setDias(dias.map((d) => ({ ...d, habilitado: d.guardadoHabilitado })));
+    // Revertir todo al estado guardado anterior
+    setDias(JSON.parse(JSON.stringify(diasGuardados)));
+    setEventosAEliminar([]);
     setMostrarAdvertencia(false);
+    setDiasConAdvertencia([]);
+    setEventosConAdvertencia([]);
     setMensaje('Cambios descartados');
   };
 
@@ -210,6 +264,7 @@ export default function ConfiguracionSemanal({
             turnos={d.turnos}
             onAgregarTurno={handleAgregarTurno}
             onEliminarTurno={handleEliminarTurno}
+            onEliminarEvento={handleEliminarEvento}
           />
         ))}
       </div>
@@ -238,35 +293,22 @@ export default function ConfiguracionSemanal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="nombreEvento" className="font-medium text-sm text-gray-700">Nombre del Evento:</label>
-              <input 
-                id="nombreEvento"
-                type="text"
-                data-cy="input-nombre-evento"
-                value={nombreEvento}
-                onChange={(e) => setNombreEvento(e.target.value)}
-                placeholder="Ej. Consulta General"
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-            
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Duración:</label>
-              <select 
-                id="duracionEvento"
-                data-cy="select-tipo-evento"
-                value={duracionEvento}
-                onChange={(e) => setDuracionEvento(e.target.value)}
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Seleccione duración...</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-              </select>
-            </div>
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="tipoEvento" className="font-medium text-sm text-gray-700">Tipo de Evento:</label>
+            <select 
+              id="tipoEvento"
+              data-cy="select-tipo-evento"
+              value={tipoEventoSeleccionado}
+              onChange={(e) => setTipoEventoSeleccionado(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione un tipo de evento...</option>
+              {TIPOS_EVENTO_MOCK.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre} ({e.duracion} min)
+                </option>
+              ))}
+            </select>
           </div>
 
           {resultadoMensaje && (
@@ -336,8 +378,18 @@ export default function ConfiguracionSemanal({
           data-cy="advertencia-reservas-global"
           className="p-5 border border-red-500/20 bg-red-950/20 rounded-xl text-red-200 mt-4 animate-fade-in"
         >
+          {diasConAdvertencia.length > 0 && (
+            <p className="text-sm font-medium mb-2">
+              Los siguientes días tienen reservas registradas: <strong className="text-red-400">{diasConAdvertencia.join(', ')}</strong>.
+            </p>
+          )}
+          {eventosConAdvertencia.length > 0 && (
+            <p className="text-sm font-medium mb-4">
+              Se han eliminado tipos de eventos que tenían reservas activas.
+            </p>
+          )}
           <p className="text-sm font-medium mb-4">
-            Los siguientes días tienen reservas registradas: <strong className="text-red-400">{diasConAdvertencia.join(', ')}</strong>. ¿Desea cancelar los turnos?
+            ¿Desea cancelar los turnos?
           </p>
           <div className="flex gap-3">
             <button
