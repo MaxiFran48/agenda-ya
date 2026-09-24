@@ -19,9 +19,9 @@ describe('esFechaValidaParaBloqueo', () => {
   });
 
   // Caso límite: fecha futura con reservas → REQUIERE_REAGENDAMIENTO
-  test('retorna REQUIERE_REAGENDAMIENTO para una fecha futura con reservas', () => {
+  test('retorna EXITO para una fecha futura con reservas (flujo CP-006)', () => {
     expect(esFechaValidaParaBloqueo('2025-06-20', true, HOY))
-      .toEqual({ estado: 'REQUIERE_REAGENDAMIENTO', urlRedireccion: '/reagendar-turnos' });
+      .toEqual({ estado: 'EXITO' });
   });
 
   // Caso inválido: formato incorrecto → ERROR

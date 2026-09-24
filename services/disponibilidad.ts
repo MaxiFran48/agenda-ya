@@ -75,12 +75,7 @@ export function esFechaValidaParaBloqueo(
     return { estado: 'ERROR' };
   }
 
-  // 4. Fecha futura con reservas → requiere reagendamiento
-  if (tieneReservas) {
-    return { estado: 'REQUIERE_REAGENDAMIENTO', urlRedireccion: '/reagendar-turnos' };
-  }
-
-  // 5. Fecha futura sin reservas → éxito
+  // 4. Fecha futura con reservas o sin reservas → éxito (permite selección temporal)
   return { estado: 'EXITO' };
 }
 
