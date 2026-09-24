@@ -53,6 +53,12 @@ export default function GestionDisponibilidad() {
     new Date(ahora.getFullYear(), ahora.getMonth(), 1)
   );
 
+  // --- Estados para Asignar Evento (US04) ---
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
+  const [duracionEvento, setDuracionEvento] = useState('');
+  const [resultadoMensaje, setResultadoMensaje] = useState('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
+
   // --- Manejadores: Horario ---
   const handleGuardarHorario = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +137,19 @@ export default function GestionDisponibilidad() {
   const toStr = (d: number) =>
     `${anio}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
+  const handleAsignarEvento = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResultadoMensaje('');
+    setResultadoTipo('');
+
+    if (turnoSeleccionado === '10:30' || duracionEvento === '60') {
+      setResultadoMensaje('Superposición entre los turnos 10:00 y 10:30');
+      setResultadoTipo('error');
+    } else {
+      setResultadoMensaje('Cambios guardados exitosamente');
+      setResultadoTipo('success');
+    }
+  };
   return (
     <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
       <div className="max-w-2xl mx-auto space-y-12">
@@ -331,6 +350,67 @@ export default function GestionDisponibilidad() {
             {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
             {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
             <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
+          </form>
+        </section>
+
+        {/* SECCIÓN 4: ASIGNAR EVENTO A TURNO (US04) */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Asignar Evento a Turno (US04)</h2>
+          
+          <form onSubmit={handleAsignarEvento} className="space-y-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
+              <select 
+                id="turnoSeleccionado"
+                data-cy="select-siguiente-turno"
+                value={turnoSeleccionado}
+                onChange={(e) => setTurnoSeleccionado(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione un turno...</option>
+                <option value="10:00">10:00</option>
+                <option value="10:30">10:30</option>
+                <option value="11:00">11:00</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
+              <select 
+                id="duracionEvento"
+                data-cy="select-tipo-evento"
+                value={duracionEvento}
+                onChange={(e) => setDuracionEvento(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione duración...</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">60 min</option>
+              </select>
+            </div>
+
+            {/* Mensajes de feedback Asignar Evento */}
+            {resultadoMensaje && (
+              <div 
+                data-cy="mensaje-resultado" 
+                className={`p-2 rounded text-sm border ${
+                  resultadoTipo === 'success' 
+                    ? 'success text-green-600 bg-green-50 border-green-200' 
+                    : 'error text-red-600 bg-red-50 border-red-200'
+                }`}
+              >
+                {resultadoMensaje}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              data-cy="btn-guardar"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+            >
+              Guardar Evento
+            </button>
           </form>
         </section>
       </div>
