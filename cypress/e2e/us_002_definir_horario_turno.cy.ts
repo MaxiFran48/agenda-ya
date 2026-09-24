@@ -13,6 +13,9 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
     const inputInicio = cy.get('[data-cy="input-hora-inicio-miércoles"]');
     const inputFin = cy.get('[data-cy="input-hora-fin-miércoles"]');
 
+    // Act: Eliminar el turno que viene por defecto para evitar superposiciones
+    cy.get('[data-cy="btn-eliminar-turno-miércoles"]').click();
+
     // Act: Escribir horas limpiando previamente y hacer clic en agregar
     inputInicio.clear().type('09:00');
     inputFin.clear().type('10:00');
@@ -36,6 +39,9 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
     // Arrange: Preparar el estado inicial con un turno válido ya creado
     const inputInicio = cy.get('[data-cy="input-hora-inicio-miércoles"]');
     const inputFin = cy.get('[data-cy="input-hora-fin-miércoles"]');
+
+    // Eliminar el turno por defecto para arrancar limpios
+    cy.get('[data-cy="btn-eliminar-turno-miércoles"]').click();
 
     inputInicio.clear().type('09:00');
     inputFin.clear().type('10:00');
