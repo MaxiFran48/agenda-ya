@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
+import { obtenerReservasPorTipoEvento } from '../services/agendaService';
 import GestionDiaTrabajo, { Turno } from './US_001_gestionDiaTrabajo';
 
 function aMinutos(hora: string): number {
@@ -34,10 +35,18 @@ export default function ConfiguracionSemanal({
 }: {
   diasIniciales?: DayConfig[];
 }) {
-  const [dias, setDias] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
+  const [diasGuardados, setDiasGuardados] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
+  const [dias, setDias] = useState<DayConfig[]>(() => JSON.parse(JSON.stringify(diasGuardados)));
   const [mensaje, setMensaje] = useState('');
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
+  
+  const [eventosAEliminar, setEventosAEliminar] = useState<{dia: string, idTurno: string, idEvento: string, nombre: string}[]>([]);
+  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<{dia: string, idTurno: string, nombre: string}[]>([]);
+  
+  const [reservasMock] = useState<any[]>([
+    { id: 1, idTurno: 't-mock-1', tipoEvento: 'Consulta Larga', estado: 'Activa' },
+  ]);
 
   // Mocks de tipos de eventos predefinidos
   const TIPOS_EVENTO_MOCK = [
@@ -85,6 +94,23 @@ export default function ConfiguracionSemanal({
     if (turnoSeleccionado === id) {
       setTurnoSeleccionado('');
     }
+  };
+
+  const handleEliminarEvento = (dia: string, idTurno: string, idEvento: string, nombre: string) => {
+    setEventosAEliminar(prev => [...prev, { dia, idTurno, idEvento, nombre }]);
+    setDias(
+      dias.map((d) =>
+        d.diaSemana === dia ? {
+          ...d,
+          turnos: d.turnos.map((t) =>
+            t.id === idTurno ? {
+              ...t,
+              eventos: t.eventos?.filter(e => e.id !== idEvento)
+            } : t
+          )
+        } : d
+      )
+    );
   };
 
   const handleAsignarEvento = (e: React.FormEvent) => {
@@ -145,14 +171,20 @@ export default function ConfiguracionSemanal({
   const handleGuardar = async () => {
     setMensaje('');
     setDiasConAdvertencia([]);
+    setEventosConAdvertencia([]);
 
     // Encontrar días que se están deshabilitando y tienen reservas
     const conflictivos = dias.filter(
       (d) => !d.habilitado && d.guardadoHabilitado && d.tieneReservas
     );
+    
+    const eventosConflictivos = eventosAEliminar.filter(ev => 
+      obtenerReservasPorTipoEvento(ev.idTurno, ev.nombre, reservasMock).length > 0
+    );
 
-    if (conflictivos.length > 0) {
+    if (conflictivos.length > 0 || eventosConflictivos.length > 0) {
       setDiasConAdvertencia(conflictivos.map((c) => c.diaSemana));
+      setEventosConAdvertencia(eventosConflictivos);
       setMostrarAdvertencia(true);
       return;
     }
@@ -168,8 +200,10 @@ export default function ConfiguracionSemanal({
       }
 
       // Actualizar estado guardado
+      setDiasGuardados(JSON.parse(JSON.stringify(dias)));
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
-      setMensaje(cambiosRealizados ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
+      setEventosAEliminar([]);
+      setMensaje(cambiosRealizados || eventosAEliminar.length > 0 ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
     } catch {
       setMensaje('Error al guardar los cambios');
     }
@@ -186,20 +220,31 @@ export default function ConfiguracionSemanal({
         }
       }
 
+      setDiasGuardados(JSON.parse(JSON.stringify(dias)));
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
       setMostrarAdvertencia(false);
+      setEventosAEliminar([]);
 
-      const listaDias = diasConAdvertencia.join(', ');
-      setMensaje(`Reservas para el día ${listaDias} canceladas`);
+      let msg = '';
+      if (diasConAdvertencia.length > 0) msg += `Reservas para el día ${diasConAdvertencia.join(', ')} canceladas. `;
+      if (eventosConAdvertencia.length > 0) {
+        eventosConAdvertencia.forEach(e => {
+          msg += `Reservas del tipo de evento ${e.nombre} para el día ${e.dia} canceladas. `;
+        });
+      }
+      setMensaje(msg.trim());
     } catch {
       setMensaje('Error al cancelar reservas');
     }
   };
 
   const handleDescartarCambios = () => {
-    // Revertir estado de habilitación al estado guardado anterior
-    setDias(dias.map((d) => ({ ...d, habilitado: d.guardadoHabilitado })));
+    // Revertir todo al estado guardado anterior
+    setDias(JSON.parse(JSON.stringify(diasGuardados)));
+    setEventosAEliminar([]);
     setMostrarAdvertencia(false);
+    setDiasConAdvertencia([]);
+    setEventosConAdvertencia([]);
     setMensaje('Cambios descartados');
   };
 
@@ -219,6 +264,7 @@ export default function ConfiguracionSemanal({
             turnos={d.turnos}
             onAgregarTurno={handleAgregarTurno}
             onEliminarTurno={handleEliminarTurno}
+            onEliminarEvento={handleEliminarEvento}
           />
         ))}
       </div>
@@ -332,8 +378,18 @@ export default function ConfiguracionSemanal({
           data-cy="advertencia-reservas-global"
           className="p-5 border border-red-500/20 bg-red-950/20 rounded-xl text-red-200 mt-4 animate-fade-in"
         >
+          {diasConAdvertencia.length > 0 && (
+            <p className="text-sm font-medium mb-2">
+              Los siguientes días tienen reservas registradas: <strong className="text-red-400">{diasConAdvertencia.join(', ')}</strong>.
+            </p>
+          )}
+          {eventosConAdvertencia.length > 0 && (
+            <p className="text-sm font-medium mb-4">
+              Se han eliminado tipos de eventos que tenían reservas activas.
+            </p>
+          )}
           <p className="text-sm font-medium mb-4">
-            Los siguientes días tienen reservas registradas: <strong className="text-red-400">{diasConAdvertencia.join(', ')}</strong>. ¿Desea cancelar los turnos?
+            ¿Desea cancelar los turnos?
           </p>
           <div className="flex gap-3">
             <button

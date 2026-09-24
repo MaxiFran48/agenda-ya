@@ -74,4 +74,64 @@ describe('US_004: Agregar/quitar tipos de eventos de turno en día de trabajo (C
       .and('have.class', 'text-red-700')
       .and('contain', 'Debe seleccionar el turno y el tipo de evento')
   })
+
+  it('Quitar tipo de evento sin reservas (Caso Positivo)', () => {
+    // Arrange
+    cy.get('[data-cy="dia-checkbox-lunes"]').check()
+    cy.get('[data-cy="input-hora-inicio-lunes"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-lunes"]').type('12:00')
+    cy.get('[data-cy="btn-agregar-turno-lunes"]').click()
+    cy.get('[data-cy="select-siguiente-turno"]').select('Lunes: 10:00 - 12:00')
+    cy.get('[data-cy="select-tipo-evento"]').select('1') 
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
+
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-1"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Cambios guardados exitosamente')
+    cy.get('[data-cy="turno-item-lunes"]').should('not.contain', 'Consulta General (45m)')
+  })
+
+  it('Quitar tipo de evento con reservas y cancelar (Advertencia)', () => {
+    // Arrange (Miércoles viene configurado con reservas mockeadas por defecto)
+    
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-3"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="advertencia-reservas-global"]').should('be.visible')
+      .and('contain', 'Se han eliminado tipos de eventos que tenían reservas activas')
+    
+    cy.get('[data-cy="btn-confirmar-cancelar-global"]').click()
+
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Reservas del tipo de evento Consulta Larga para el día Miércoles canceladas')
+  })
+
+  it('Quitar tipo de evento con reservas y descartar cambios (Advertencia)', () => {
+    // Arrange
+    
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-3"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="advertencia-reservas-global"]').should('be.visible')
+      .and('contain', 'Se han eliminado tipos de eventos que tenían reservas activas')
+
+    cy.get('[data-cy="btn-confirmar-descartar-global"]').click()
+
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Cambios descartados')
+    
+    cy.get('[data-cy="turno-item-miércoles"]').should('contain', 'Consulta Larga (60m)')
+  })
 })
