@@ -5,6 +5,7 @@ import {
   esFechaValidaParaBloqueo,
   descartarSeleccion,
 } from '../services/disponibilidad';
+import { procesarConfirmacionBloqueo } from '../services/logicaBloqueo';
 import GestionSemana, { DayConfig } from '../components/US_001_configuracionSemanal';
 import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCalendario';
 
@@ -13,7 +14,16 @@ import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCa
 const DIAS_INICIALES: DayConfig[] = [
   { diaSemana: 'Lunes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Martes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [
+    {
+      id: 't-mock-1',
+      horaInicio: '09:00',
+      horaFin: '11:00',
+      eventos: [
+        { id: '3', nombre: 'Consulta Larga', duracion: 60 }
+      ]
+    }
+  ] },
   { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
   { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
@@ -24,6 +34,19 @@ const DIAS_INICIALES: DayConfig[] = [
 const DIAS_CON_RESERVAS: string[] = [
   getFechaRelativa(5),
   getFechaRelativa(8),
+];
+
+interface TurnoMock {
+  id: number;
+  horario: string;
+  estado: string;
+  fecha: string;
+}
+
+const TURNOS_MOCK: TurnoMock[] = [
+  { id: 1, horario: '10:00', estado: 'Activo', fecha: getFechaRelativa(5) },
+  { id: 2, horario: '11:00', estado: 'Activo', fecha: getFechaRelativa(5) },
+  { id: 3, horario: '15:00', estado: 'Activo', fecha: getFechaRelativa(8) },
 ];
 
 function getFechaRelativa(dias: number): string {
@@ -56,9 +79,10 @@ export default function GestionDisponibilidad() {
   const [diasSeleccionados, setDiasSeleccionados] = useState<string[]>([]);
   const [diasBloqueados, setDiasBloqueados] = useState<string[]>([]);
   const [mensajeConfirmacion, setMensajeConfirmacion] = useState('');
-  const [antelacionHoras, setAntelacionHoras] = useState<number | ''>(0);
-  const [errorAntelacion, setErrorAntelacion] = useState('');
-  const [mensajeExitoAntelacion, setMensajeExitoAntelacion] = useState('');
+  // --- Estados: Modal CP-006 ---
+  const [mostrarModalAdvertencia, setMostrarModalAdvertencia] = useState(false);
+  const [turnosAfectados, setTurnosAfectados] = useState<TurnoMock[]>([]);
+  const [estadoMockTurnos, setEstadoMockTurnos] = useState<TurnoMock[]>(TURNOS_MOCK);
 
   // --- Estado: navegación del calendario ---
   const ahora = new Date();
@@ -66,11 +90,7 @@ export default function GestionDisponibilidad() {
     new Date(ahora.getFullYear(), ahora.getMonth(), 1)
   );
 
-  // --- Estados para Asignar Evento (US04) ---
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
-  const [duracionEvento, setDuracionEvento] = useState('');
-  const [resultadoMensaje, setResultadoMensaje] = useState('');
-  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
+
 
   // --- Manejadores: Horario ---
   const handleGuardarHorario = (e: React.FormEvent) => {
@@ -98,13 +118,9 @@ export default function GestionDisponibilidad() {
       setErrorBloqueo('No se pueden bloquear fechas pasadas ni el día de hoy.');
       return;
     }
-    if (resultado.estado === 'REQUIERE_REAGENDAMIENTO') {
-      const confirmar = window.confirm(
-        `El día ${fechaStr} tiene turnos reservados.\n¿Desea reagendarlos antes de bloquear este día?`
-      );
-      if (confirmar) window.location.assign(resultado.urlRedireccion);
-      return;
-    }
+    
+    // Con CP-006 el reagendamiento/cancelación se maneja al guardar, 
+    // por lo que permitimos siempre seleccionar el día temporalmente.
     setDiasSeleccionados((prev) =>
       prev.includes(fechaStr) ? prev : [...prev, fechaStr]
     );
@@ -113,9 +129,55 @@ export default function GestionDisponibilidad() {
   // --- Manejador: Confirmar ---
   const handleGuardar = () => {
     if (diasSeleccionados.length === 0) return;
+    
+    // Verificar si algún día seleccionado tiene reservas
+    const diasConReservasEnSeleccion = diasSeleccionados.filter(dia => DIAS_CON_RESERVAS.includes(dia));
+    
+    if (diasConReservasEnSeleccion.length > 0) {
+      // Mostrar modal
+      const turnosInvolucrados = estadoMockTurnos.filter(t => diasConReservasEnSeleccion.includes(t.fecha));
+      setTurnosAfectados(turnosInvolucrados);
+      setMostrarModalAdvertencia(true);
+      return;
+    }
+    
+    // Flujo normal sin reservas
+    const resultado = procesarConfirmacionBloqueo(diasSeleccionados[0], false, 'NINGUNA');
     setDiasBloqueados((prev) => [...prev, ...diasSeleccionados]);
     setDiasSeleccionados([]);
-    setMensajeConfirmacion(`Se bloquearon ${diasSeleccionados.length} día(s) exitosamente.`);
+    setMensajeConfirmacion(resultado.mensaje);
+  };
+  
+  const handleConfirmarBloqueoModal = () => {
+    const resultado = procesarConfirmacionBloqueo(diasSeleccionados[0], true, 'CONFIRMAR');
+    
+    // Actualizar estado de turnos mockeados a Cancelado
+    const nuevosTurnos = estadoMockTurnos.map(t => {
+      if (turnosAfectados.find(ta => ta.id === t.id)) {
+        return { ...t, estado: 'Cancelado' };
+      }
+      return t;
+    });
+    setEstadoMockTurnos(nuevosTurnos);
+    
+    // Mostrar visualmente en el modal que se cancelaron antes de cerrar
+    setTurnosAfectados(nuevosTurnos.filter(t => diasSeleccionados.includes(t.fecha)));
+    
+    // Simulamos un pequeño delay para que el usuario vea el cambio a "Cancelado" 
+    // antes de cerrar el modal y confirmar
+    setTimeout(() => {
+      setDiasBloqueados((prev) => [...prev, ...diasSeleccionados]);
+      setDiasSeleccionados([]);
+      setMensajeConfirmacion(resultado.mensaje);
+      setMostrarModalAdvertencia(false);
+      setTurnosAfectados([]);
+    }, 1000);
+  };
+
+  const handleAbortarBloqueoModal = () => {
+    procesarConfirmacionBloqueo(diasSeleccionados[0], true, 'ABORTAR');
+    setMostrarModalAdvertencia(false);
+    setTurnosAfectados([]);
   };
 
   // --- Manejador: Descartar ---
@@ -123,18 +185,6 @@ export default function GestionDisponibilidad() {
     setDiasSeleccionados(descartarSeleccion(diasSeleccionados));
     setMensajeConfirmacion('');
     setErrorBloqueo('');
-  };
-
-  const handleGuardarAntelacion = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorAntelacion('');
-    setMensajeExitoAntelacion('');
-    if (antelacionHoras === '') {
-      setErrorAntelacion('Debe ingresar un valor. Si no desea antelación mínima, ingrese 0.');
-      return;
-    }
-    setMensajeExitoAntelacion('Regla de antelación guardada exitosamente');
-    setTimeout(() => setMensajeExitoAntelacion(''), 5000);
   };
 
   // --- Lógica del calendario ---
@@ -150,25 +200,7 @@ export default function GestionDisponibilidad() {
   const toStr = (d: number) =>
     `${anio}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-  const handleAsignarEvento = (e: React.FormEvent) => {
-    e.preventDefault();
-    setResultadoMensaje('');
-    setResultadoTipo('');
 
-    if (!turnoSeleccionado || !duracionEvento) {
-      setResultadoMensaje('Debe seleccionar el siguiente turno y el tipo de evento');
-      setResultadoTipo('error');
-      return;
-    }
-
-    if (turnoSeleccionado === '10:30' || duracionEvento === '60') {
-      setResultadoMensaje('Superposición entre los turnos 10:00 y 10:30');
-      setResultadoTipo('error');
-    } else {
-      setResultadoMensaje('Cambios guardados exitosamente');
-      setResultadoTipo('success');
-    }
-  };
   return (
     <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
       <div className="max-w-4xl mx-auto space-y-12">
@@ -286,7 +318,7 @@ export default function GestionDisponibilidad() {
                 return (
                   <button
                     key={i}
-                    data-cy={!esPasadoOHoy && !estaBloqueado ? `dia-futuro-${diaNum}` : `dia-pasado-${diaNum}`}
+                    data-cy={!esPasadoOHoy && !estaBloqueado ? `dia-${fechaStr}` : `dia-pasado-${diaNum}`}
                     disabled={esPasadoOHoy || estaBloqueado}
                     onClick={() => handleClickDia(fechaStr)}
                     className={cls}
@@ -340,9 +372,9 @@ export default function GestionDisponibilidad() {
                 {diasSeleccionados.map((f) => <li key={f}>{f}</li>)}
               </ul>
               <div className="flex gap-3">
-                <button onClick={handleGuardar} data-cy="btn-confirmar-bloqueo"
+                <button onClick={handleGuardar} data-cy="btn-guardar"
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors">
-                  Confirmar bloqueo
+                  Guardar
                 </button>
                 <button onClick={handleDescartar} data-cy="btn-descartar"
                   className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded transition-colors">
@@ -361,61 +393,97 @@ export default function GestionDisponibilidad() {
           )}
         </section>
 
-        {/* ── SECCIÓN 4: CONFIGURAR ANTELACIÓN MÍNIMA ── */}
-        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Configurar Antelación Mínima</h2>
-          <form onSubmit={handleGuardarAntelacion} className="space-y-4">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="antelacion" className="font-medium text-sm text-gray-700">Antelación mínima (en horas):</label>
-              <div className="flex items-center gap-3">
-                <input type="number" id="antelacion" data-cy="input-antelacion-horas" value={antelacionHoras} onChange={(e) => setAntelacionHoras(e.target.value === '' ? '' : Number(e.target.value))} min="0" className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none w-24" />
-                <span className="text-sm font-medium text-gray-600">{antelacionHoras} {antelacionHoras === 1 ? 'hora' : 'horas'}</span>
+        {/* ── MODAL ADVERTENCIA CP-006 ── */}
+        {mostrarModalAdvertencia && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div data-cy="modal-advertencia" className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-xl font-bold text-red-600 mb-4">Advertencia</h3>
+              <p className="mb-4 text-gray-700">
+                Está intentando bloquear días que ya contienen reservas. 
+                Si continúa, los siguientes turnos serán cancelados.
+              </p>
+              
+              <div className="bg-gray-50 p-3 rounded mb-5 max-h-48 overflow-y-auto">
+                <h4 className="font-semibold text-sm mb-2 text-gray-600">Turnos afectados:</h4>
+                <ul className="space-y-2">
+                  {turnosAfectados.map(t => (
+                    <li key={t.id} className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0">
+                      <span>{t.fecha} - {t.horario}</span>
+                      <span data-cy={`estado-turno-${t.id}`} 
+                        className={`font-medium px-2 py-0.5 rounded text-xs ${t.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {t.estado}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
+</div>
+            {/* Botones del Modal de Confirmación (rama tp6-testing) */}
+            <div className="flex gap-3 justify-end mt-4">
+              <button 
+                type="button"
+                onClick={handleAbortarBloqueoModal} 
+                data-cy="btn-abortar-bloqueo"
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors">
+                Cancelar/Descartar
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirmarBloqueoModal} 
+                data-cy="btn-confirmar-bloqueo"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors">
+                Confirmar
+              </button>
             </div>
-            {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
-            {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
-            <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
-          </form>
-        </section>
+          </div>
+          
+          {/* Cierre de Sección 4 (rama vale-US-005) */}
+          {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
+          {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
+          <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
+        </form>
+      </section>
 
-        {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
-        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno</h2>
+      {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
+      <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno</h2>
 
-          <form onSubmit={handleAsignarEvento} className="space-y-4">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
-              <select
-                id="turnoSeleccionado"
-                data-cy="select-siguiente-turno"
-                value={turnoSeleccionado}
-                onChange={(e) => setTurnoSeleccionado(e.target.value)}
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Seleccione un turno...</option>
-                <option value="10:00">10:00</option>
-                <option value="10:30">10:30</option>
-                <option value="11:00">11:00</option>
-              </select>
+        <form onSubmit={handleAsignarEvento} className="space-y-4">
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
+            <select
+              id="turnoSeleccionado"
+              data-cy="select-siguiente-turno"
+              value={turnoSeleccionado}
+              onChange={(e) => setTurnoSeleccionado(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione un turno...</option>
+              <option value="10:00">10:00</option>
+              <option value="10:30">10:30</option>
+              <option value="11:00">11:00</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
+            <select
+              id="duracionEvento"
+              data-cy="select-tipo-evento"
+              value={duracionEvento}
+              onChange={(e) => setDuracionEvento(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione duración...</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
             </div>
+          </div>
+        )}
 
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
-              <select
-                id="duracionEvento"
-                data-cy="select-tipo-evento"
-                value={duracionEvento}
-                onChange={(e) => setDuracionEvento(e.target.value)}
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Seleccione duración...</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-              </select>
-            </div>
-
-            {/* Mensajes de feedback Asignar Evento */}
+{/* Mensajes de feedback Asignar Evento */}
             {resultadoMensaje && (
               <div
                 data-cy="mensaje-resultado"

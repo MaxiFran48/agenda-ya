@@ -2,10 +2,17 @@
 
 import React, { useState } from 'react';
 
+export interface TipoEvento {
+  id: string;
+  nombre: string;
+  duracion: number;
+}
+
 export interface Turno {
   id: string;
   horaInicio: string;
   horaFin: string;
+  eventos?: TipoEvento[];
 }
 
 function aMinutos(hora: string): number {
@@ -20,6 +27,7 @@ export default function GestionDiaTrabajo({
   turnos = [],
   onAgregarTurno,
   onEliminarTurno,
+  onEliminarEvento,
 }: {
   diaSemana: string;
   habilitado: boolean;
@@ -27,6 +35,7 @@ export default function GestionDiaTrabajo({
   turnos?: Turno[];
   onAgregarTurno?: (dia: string, horaInicio: string, horaFin: string) => void;
   onEliminarTurno?: (dia: string, id: string) => void;
+  onEliminarEvento?: (dia: string, idTurno: string, idEvento: string, nombreEvento: string) => void;
 }) {
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
@@ -95,24 +104,47 @@ export default function GestionDiaTrabajo({
                 key={t.id}
                 data-testid={`turno-item-${normalizado}`}
                 data-cy={`turno-item-${normalizado}`}
-                className={`p-2 rounded text-sm font-medium flex items-center justify-between ${
+                className={`p-3 rounded text-sm font-medium flex flex-col gap-2 ${
                   habilitado ? 'bg-blue-50 text-blue-900' : 'bg-gray-100 text-slate-500'
                 }`}
               >
-                <span>
-                  {t.horaInicio} - {t.horaFin}
-                </span>
-                {onEliminarTurno && (
-                  <button
-                    type="button"
-                    data-testid={`btn-eliminar-turno-${normalizado}`}
-                    data-cy={`btn-eliminar-turno-${normalizado}`}
-                    onClick={() => onEliminarTurno(diaSemana, t.id)}
-                    className="text-xs font-bold text-red-500 hover:text-red-700 px-1.5 transition"
-                    aria-label={`Eliminar turno ${t.horaInicio} - ${t.horaFin}`}
-                  >
-                    ✕
-                  </button>
+                <div className="flex items-center justify-between">
+                  <span>
+                    {t.horaInicio} - {t.horaFin}
+                  </span>
+                  {onEliminarTurno && (
+                    <button
+                      type="button"
+                      data-testid={`btn-eliminar-turno-${normalizado}`}
+                      data-cy={`btn-eliminar-turno-${normalizado}`}
+                      onClick={() => onEliminarTurno(diaSemana, t.id)}
+                      className="text-xs font-bold text-red-500 hover:text-red-700 px-1.5 transition"
+                      aria-label={`Eliminar turno ${t.horaInicio} - ${t.horaFin}`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {/* Eventos del turno */}
+                {t.eventos && t.eventos.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {t.eventos.map((e) => (
+                      <span key={e.id} className="flex items-center gap-1 text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                        {e.nombre} ({e.duracion}m)
+                        {onEliminarEvento && (
+                           <button
+                             type="button"
+                             data-cy={`btn-eliminar-evento-${e.id}`}
+                             onClick={() => onEliminarEvento(diaSemana, t.id, e.id, e.nombre)}
+                             className="text-blue-900 hover:text-red-600 transition font-bold"
+                             aria-label={`Quitar ${e.nombre}`}
+                           >
+                             ✕
+                           </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             ))}
