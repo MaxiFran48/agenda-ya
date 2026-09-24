@@ -5,6 +5,18 @@ import {
   esFechaValidaParaBloqueo,
   descartarSeleccion,
 } from '../services/disponibilidad';
+import GestionSemana, { DayConfig } from '../components/US_001_configuracionSemanal';
+
+// Datos del entorno de test del CP-001-01
+const DIAS_INICIALES: DayConfig[] = [
+  { diaSemana: 'Lunes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Martes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+];
 
 // ─── Datos de ejemplo ────────────────────────────────────────────────────────
 const DIAS_CON_RESERVAS: string[] = [
@@ -117,7 +129,7 @@ export default function GestionDisponibilidad() {
 
   return (
     <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
-      <div className="max-w-2xl mx-auto space-y-12">
+      <div className="max-w-4xl mx-auto space-y-12">
         <h1 className="text-3xl font-bold text-center text-blue-600 mb-8">
           Módulo de Gestión de Disponibilidad
         </h1>
@@ -164,9 +176,15 @@ export default function GestionDisponibilidad() {
           </form>
         </section>
 
-        {/* ── SECCIÓN 2: BLOQUEAR UN DÍA ── */}
+        {/* ── SECCIÓN 2: CONFIGURACIÓN SEMANAL DE DÍAS DE TRABAJO (US_001) ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-5 border-b pb-2">2. Bloquear un día</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Configuración semanal de días de trabajo (US_001)</h2>
+          <GestionSemana diasIniciales={DIAS_INICIALES} />
+        </section>
+
+        {/* ── SECCIÓN 3: BLOQUEAR UN DÍA ── */}
+        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold mb-5 border-b pb-2">3. Bloquear un día</h2>
 
           {/* ── MINI CALENDARIO ── */}
           <div className="mb-4 select-none">
