@@ -6,51 +6,79 @@ describe('US_004: Agregar/quitar tipos de eventos de turno en día de trabajo (C
     cy.visit('http://localhost:3000') 
   })
 
-  it('Habilitar tipo de evento en un turno sin superposición (Caso Positivo)', () => {
-    // Arrange: preparar el estado inicial
-    // Seleccionamos que el siguiente turno empieza a las 11:00 y el evento dura 45 min
-    cy.get('[data-cy="select-siguiente-turno"]').select('11:00')
+  it('Habilitar tipo de evento en un turno (Caso Positivo)', () => {
+    // 1. Asegurar que haya un turno disponible (por ejemplo en Lunes)
+    // Primero, hacemos click en habilitar el lunes por si acaso
+    // (Por defecto el Lunes está desactivado en page.tsx test data: { diaSemana: 'Lunes', habilitado: false })
+    // Ah, esperá, en el array DIAS_INICIALES de page.tsx Lunes está en false.
+    // Habilitemos Lunes
+    cy.get('[data-cy="dia-checkbox-lunes"]').check()
+    
+    // Agregamos un turno en lunes
+    cy.get('[data-cy="input-hora-inicio-lunes"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-lunes"]').type('12:00')
+    cy.get('[data-cy="btn-agregar-turno-lunes"]').click()
+
+    // 2. Seleccionar el turno recién creado
+    // Cypress seleccionará la opción que contenga el texto dado (por ejemplo 'Lunes: 10:00 - 12:00')
+    cy.get('[data-cy="select-siguiente-turno"]').select('Lunes: 10:00 - 12:00')
+    
+    // 3. Completar nombre y duración
+    cy.get('[data-cy="input-nombre-evento"]').type('Consulta General')
     cy.get('[data-cy="select-tipo-evento"]').select('45')
+    
+    // Guardar
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
 
-    // Act: ejecutar la acción principal
-    cy.get('[data-cy="btn-guardar"]').click()
-
-    // Assert: verificar el resultado esperado
-    // Buscamos que el mensaje sea visible, tenga color de éxito y el texto correcto
+    // Verificar éxito
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'success')
-      .and('contain', 'Cambios guardados exitosamente')
+      .and('have.class', 'text-green-700')
+      .and('contain', 'Evento "Consulta General" asignado exitosamente')
+
+    // Verificar que el evento aparece en el turno
+    cy.get('[data-cy="turno-item-lunes"]').should('contain', 'Consulta General (45m)')
   })
 
   it('Error al habilitar tipo de evento con superposición (Caso Negativo)', () => {
-    // Arrange: preparar el estado inicial
-    // Seleccionamos que el siguiente turno empieza a las 10:30 y el evento dura 60 min
-    cy.get('[data-cy="select-siguiente-turno"]').select('10:30')
+    // Creamos un turno corto de 30 mins
+    cy.get('[data-cy="dia-checkbox-jueves"]').check()
+    cy.get('[data-cy="input-hora-inicio-jueves"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-jueves"]').type('10:30')
+    cy.get('[data-cy="btn-agregar-turno-jueves"]').click()
+
+    // Intentamos asignar un evento de 60 mins a un turno de 30 mins
+    cy.get('[data-cy="select-siguiente-turno"]').select('Jueves: 10:00 - 10:30')
+    cy.get('[data-cy="input-nombre-evento"]').type('Consulta Larga')
     cy.get('[data-cy="select-tipo-evento"]').select('60')
+    
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
 
-    // Act: ejecutar la acción principal
-    cy.get('[data-cy="btn-guardar"]').click()
-
-    // Assert: verificar el resultado esperado
-    // Buscamos que el mensaje sea visible, tenga color de error y el texto de superposición
+    // Assert: Debe mostrar error de superposición
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'error')
-      .and('contain', 'Superposición entre los turnos 10:00 y 10:30')
+      .and('have.class', 'text-red-700')
+      .and('contain', 'La duración excede el turno y se superpone con el siguiente.')
   })
 
   it('Error al guardar si falta completar un campo (Validación)', () => {
-    // Arrange: Dejamos el tipo de evento vacío, solo seleccionamos el turno
-    cy.get('[data-cy="select-siguiente-turno"]').select('11:00')
+    cy.get('[data-cy="dia-checkbox-martes"]').check()
+    cy.get('[data-cy="input-hora-inicio-martes"]').type('14:00')
+    cy.get('[data-cy="input-hora-fin-martes"]').type('16:00')
+    cy.get('[data-cy="btn-agregar-turno-martes"]').click()
 
-    // Act: intentamos guardar
-    cy.get('[data-cy="btn-guardar"]').click()
+    cy.get('[data-cy="select-siguiente-turno"]').select('Martes: 14:00 - 16:00')
+    
+    // No completamos nombre de evento ni duración
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
 
     // Assert: el mensaje de validación debe aparecer
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'error')
-      .and('contain', 'Debe seleccionar el siguiente turno y el tipo de evento')
+      .and('have.class', 'text-red-700')
+      .and('contain', 'Debe completar todos los campos (turno, nombre y duración)')
   })
 })

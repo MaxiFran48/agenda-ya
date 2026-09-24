@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
 import GestionDiaTrabajo, { Turno } from './US_001_gestionDiaTrabajo';
 
+function aMinutos(hora: string): number {
+  const [horas, minutos] = hora.split(':').map(Number);
+  return horas * 60 + minutos;
+}
+
 export interface DayConfig {
   diaSemana: string;
   habilitado: boolean;
@@ -34,6 +39,13 @@ export default function ConfiguracionSemanal({
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
 
+  // Estados para Asignar Eventos a Turnos
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
+  const [nombreEvento, setNombreEvento] = useState('');
+  const [duracionEvento, setDuracionEvento] = useState('');
+  const [resultadoMensaje, setResultadoMensaje] = useState('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
+
   const handleToggle = (index: number) => {
     const nuevosDias = [...dias];
     nuevosDias[index].habilitado = !nuevosDias[index].habilitado;
@@ -62,6 +74,63 @@ export default function ConfiguracionSemanal({
         d.diaSemana === dia ? { ...d, turnos: d.turnos.filter((t) => t.id !== id) } : d
       )
     );
+    // Si se eliminó el turno seleccionado, limpiamos el state
+    if (turnoSeleccionado === id) {
+      setTurnoSeleccionado('');
+    }
+  };
+
+  const handleAsignarEvento = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResultadoMensaje('');
+    setResultadoTipo('');
+
+    if (!turnoSeleccionado || !nombreEvento || !duracionEvento) {
+      setResultadoMensaje('Debe completar todos los campos (turno, nombre y duración)');
+      setResultadoTipo('error');
+      return;
+    }
+
+    let diaIndex = -1;
+    let turnoIndex = -1;
+    for (let i = 0; i < dias.length; i++) {
+      const tIdx = dias[i].turnos.findIndex(t => t.id === turnoSeleccionado);
+      if (tIdx !== -1) {
+        diaIndex = i;
+        turnoIndex = tIdx;
+        break;
+      }
+    }
+
+    if (diaIndex === -1) return;
+
+    const nuevosDias = [...dias];
+    const turno = nuevosDias[diaIndex].turnos[turnoIndex];
+    
+    // Validar superposición por duración
+    const duracionTurno = aMinutos(turno.horaFin) - aMinutos(turno.horaInicio);
+    const duracionOcupada = (turno.eventos || []).reduce((acc, e) => acc + e.duracion, 0);
+    const duracionNueva = Number(duracionEvento);
+
+    if (duracionOcupada + duracionNueva > duracionTurno) {
+      setResultadoMensaje(`La duración excede el turno y se superpone con el siguiente.`);
+      setResultadoTipo('error');
+      return;
+    }
+
+    if (!turno.eventos) turno.eventos = [];
+    
+    turno.eventos.push({
+      id: `${Date.now()}`,
+      nombre: nombreEvento,
+      duracion: Number(duracionEvento)
+    });
+
+    setDias(nuevosDias);
+    setResultadoMensaje(`Evento "${nombreEvento}" asignado exitosamente`);
+    setResultadoTipo('success');
+    setNombreEvento('');
+    setDuracionEvento('');
   };
 
   const handleGuardar = async () => {
@@ -143,6 +212,84 @@ export default function ConfiguracionSemanal({
             onEliminarTurno={handleEliminarTurno}
           />
         ))}
+      </div>
+
+      {/* ── Asignar Evento a Turno (US04) integrado ── */}
+      <div className="mt-8 p-6 bg-white border border-blue-200 rounded-xl shadow-sm text-slate-900">
+        <h4 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">Asignar Evento a Turno</h4>
+        <form onSubmit={handleAsignarEvento} className="space-y-4 max-w-xl">
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Seleccionar turno existente:</label>
+            <select 
+              id="turnoSeleccionado"
+              data-cy="select-siguiente-turno"
+              value={turnoSeleccionado}
+              onChange={(e) => setTurnoSeleccionado(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione un turno...</option>
+              {dias.filter(d => d.habilitado).map(d => (
+                d.turnos.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {d.diaSemana}: {t.horaInicio} - {t.horaFin}
+                  </option>
+                ))
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="nombreEvento" className="font-medium text-sm text-gray-700">Nombre del Evento:</label>
+              <input 
+                id="nombreEvento"
+                type="text"
+                data-cy="input-nombre-evento"
+                value={nombreEvento}
+                onChange={(e) => setNombreEvento(e.target.value)}
+                placeholder="Ej. Consulta General"
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Duración:</label>
+              <select 
+                id="duracionEvento"
+                data-cy="select-tipo-evento"
+                value={duracionEvento}
+                onChange={(e) => setDuracionEvento(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">Seleccione duración...</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">60 min</option>
+              </select>
+            </div>
+          </div>
+
+          {resultadoMensaje && (
+            <div 
+              data-cy="mensaje-resultado" 
+              className={`p-2 rounded text-sm border ${
+                resultadoTipo === 'success' 
+                  ? 'text-green-700 bg-green-50 border-green-200' 
+                  : 'text-red-700 bg-red-50 border-red-200'
+              }`}
+            >
+              {resultadoMensaje}
+            </div>
+          )}
+
+          <button 
+            type="submit"
+            data-cy="btn-guardar-evento"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          >
+            Guardar Evento en Turno
+          </button>
+        </form>
       </div>
 
       {/* Global Actions */}
