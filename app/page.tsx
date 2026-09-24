@@ -381,11 +381,11 @@ export default function GestionDisponibilidad() {
         {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno</h2>
-          
+
           <form onSubmit={handleAsignarEvento} className="space-y-4">
             <div className="flex flex-col space-y-1">
               <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Siguiente turno:</label>
-              <select 
+              <select
                 id="turnoSeleccionado"
                 data-cy="select-siguiente-turno"
                 value={turnoSeleccionado}
@@ -401,7 +401,7 @@ export default function GestionDisponibilidad() {
 
             <div className="flex flex-col space-y-1">
               <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Tipo de evento (Duración en min):</label>
-              <select 
+              <select
                 id="duracionEvento"
                 data-cy="select-tipo-evento"
                 value={duracionEvento}
@@ -417,19 +417,18 @@ export default function GestionDisponibilidad() {
 
             {/* Mensajes de feedback Asignar Evento */}
             {resultadoMensaje && (
-              <div 
-                data-cy="mensaje-resultado" 
-                className={`p-2 rounded text-sm border ${
-                  resultadoTipo === 'success' 
-                    ? 'success text-green-600 bg-green-50 border-green-200' 
+              <div
+                data-cy="mensaje-resultado"
+                className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
+                    ? 'success text-green-600 bg-green-50 border-green-200'
                     : 'error text-red-600 bg-red-50 border-red-200'
-                }`}
+                  }`}
               >
                 {resultadoMensaje}
               </div>
             )}
 
-            <button 
+            <button
               type="submit"
               data-cy="btn-guardar"
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
