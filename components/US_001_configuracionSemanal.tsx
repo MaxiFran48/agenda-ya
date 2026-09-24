@@ -40,10 +40,10 @@ export default function ConfiguracionSemanal({
   const [mensaje, setMensaje] = useState('');
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
-  
-  const [eventosAEliminar, setEventosAEliminar] = useState<{dia: string, idTurno: string, idEvento: string, nombre: string}[]>([]);
-  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<{dia: string, idTurno: string, nombre: string}[]>([]);
-  
+
+  const [eventosAEliminar, setEventosAEliminar] = useState<{ dia: string, idTurno: string, idEvento: string, nombre: string }[]>([]);
+  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<{ dia: string, idTurno: string, nombre: string }[]>([]);
+
   const [reservasMock] = useState<any[]>([
     { id: 1, idTurno: 't-mock-1', tipoEvento: 'Consulta Larga', estado: 'Activa' },
   ]);
@@ -73,12 +73,12 @@ export default function ConfiguracionSemanal({
       dias.map((d) =>
         d.diaSemana === dia
           ? {
-              ...d,
-              turnos: [
-                ...d.turnos,
-                { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, horaInicio, horaFin },
-              ],
-            }
+            ...d,
+            turnos: [
+              ...d.turnos,
+              { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, horaInicio, horaFin },
+            ],
+          }
           : d
       )
     );
@@ -142,7 +142,7 @@ export default function ConfiguracionSemanal({
 
     const nuevosDias = [...dias];
     const turno = nuevosDias[diaIndex].turnos[turnoIndex];
-    
+
     // Validar superposición por duración
     const duracionTurno = aMinutos(turno.horaFin) - aMinutos(turno.horaInicio);
     const duracionOcupada = (turno.eventos || []).reduce((acc, e) => acc + e.duracion, 0);
@@ -155,9 +155,9 @@ export default function ConfiguracionSemanal({
     }
 
     if (!turno.eventos) turno.eventos = [];
-    
+
     turno.eventos.push({
-      id: `${Date.now()}`,
+      id: eventoMock.id,
       nombre: eventoMock.nombre,
       duracion: eventoMock.duracion
     });
@@ -177,8 +177,8 @@ export default function ConfiguracionSemanal({
     const conflictivos = dias.filter(
       (d) => !d.habilitado && d.guardadoHabilitado && d.tieneReservas
     );
-    
-    const eventosConflictivos = eventosAEliminar.filter(ev => 
+
+    const eventosConflictivos = eventosAEliminar.filter(ev =>
       obtenerReservasPorTipoEvento(ev.idTurno, ev.nombre, reservasMock).length > 0
     );
 
@@ -275,7 +275,7 @@ export default function ConfiguracionSemanal({
         <form onSubmit={handleAsignarEvento} className="space-y-4 max-w-xl">
           <div className="flex flex-col space-y-1">
             <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Seleccionar turno existente:</label>
-            <select 
+            <select
               id="turnoSeleccionado"
               data-cy="select-siguiente-turno"
               value={turnoSeleccionado}
@@ -295,7 +295,7 @@ export default function ConfiguracionSemanal({
 
           <div className="flex flex-col space-y-1">
             <label htmlFor="tipoEvento" className="font-medium text-sm text-gray-700">Tipo de Evento:</label>
-            <select 
+            <select
               id="tipoEvento"
               data-cy="select-tipo-evento"
               value={tipoEventoSeleccionado}
@@ -312,19 +312,18 @@ export default function ConfiguracionSemanal({
           </div>
 
           {resultadoMensaje && (
-            <div 
-              data-cy="mensaje-resultado" 
-              className={`p-2 rounded text-sm border ${
-                resultadoTipo === 'success' 
-                  ? 'text-green-700 bg-green-50 border-green-200' 
+            <div
+              data-cy="mensaje-resultado"
+              className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
+                  ? 'text-green-700 bg-green-50 border-green-200'
                   : 'text-red-700 bg-red-50 border-red-200'
-              }`}
+                }`}
             >
               {resultadoMensaje}
             </div>
           )}
 
-          <button 
+          <button
             type="submit"
             data-cy="btn-guardar-evento"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"

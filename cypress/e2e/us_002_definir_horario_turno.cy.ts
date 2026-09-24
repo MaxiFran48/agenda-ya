@@ -8,6 +8,9 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
   });
 
   it('Debería crear un turno correctamente en un día habilitado (Flujo Exitoso)', () => {
+    // Arrange: Eliminar el turno precargado del Miércoles para que no haya superposición
+    cy.get('[data-cy="btn-eliminar-turno-miércoles"]').click();
+
     // Arrange: Identificar los inputs del Miércoles
     const inputInicio = cy.get('[data-cy="input-hora-inicio-miércoles"]');
     const inputFin = cy.get('[data-cy="input-hora-fin-miércoles"]');

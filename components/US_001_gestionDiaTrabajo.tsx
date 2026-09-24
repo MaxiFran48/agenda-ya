@@ -157,7 +157,9 @@ export default function GestionDiaTrabajo({
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
           <div className="flex gap-2 items-center">
             <input
-              type="time"
+              type="text"
+              pattern="[0-9]{2}:[0-9]{2}"
+              placeholder="HH:MM"
               data-testid={`input-hora-inicio-${normalizado}`}
               data-cy={`input-hora-inicio-${normalizado}`}
               value={horaInicio}
@@ -166,7 +168,9 @@ export default function GestionDiaTrabajo({
             />
             <span className="text-slate-500 text-sm">-</span>
             <input
-              type="time"
+              type="text"
+              pattern="[0-9]{2}:[0-9]{2}"
+              placeholder="HH:MM"
               data-testid={`input-hora-fin-${normalizado}`}
               data-cy={`input-hora-fin-${normalizado}`}
               value={horaFin}
