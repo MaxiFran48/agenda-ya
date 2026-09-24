@@ -84,6 +84,16 @@ export default function GestionDisponibilidad() {
   const [turnosAfectados, setTurnosAfectados] = useState<TurnoMock[]>([]);
   const [estadoMockTurnos, setEstadoMockTurnos] = useState<TurnoMock[]>(TURNOS_MOCK);
 
+  // --- Estados: Antelación (Sección 4 - US-005) ---
+  const [errorAntelacion, setErrorAntelacion] = useState('');
+  const [mensajeExitoAntelacion, setMensajeExitoAntelacion] = useState('');
+
+  // --- Estados: Asignar Evento a Turno (Sección 5 - US04) ---
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
+  const [duracionEvento, setDuracionEvento] = useState('');
+  const [resultadoMensaje, setResultadoMensaje] = useState('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error'>('success');
+
   // --- Estado: navegación del calendario ---
   const ahora = new Date();
   const [mesVista, setMesVista] = useState(
@@ -185,6 +195,21 @@ export default function GestionDisponibilidad() {
     setDiasSeleccionados(descartarSeleccion(diasSeleccionados));
     setMensajeConfirmacion('');
     setErrorBloqueo('');
+  };
+
+  // --- Manejador: Asignar Evento a Turno (Sección 5) ---
+  const handleAsignarEvento = (e: React.FormEvent) => {
+    e.preventDefault();
+    setResultadoMensaje('');
+    if (!turnoSeleccionado || !duracionEvento) {
+      setResultadoTipo('error');
+      setResultadoMensaje('Debe seleccionar un turno y un tipo de evento.');
+      return;
+    }
+    setResultadoTipo('success');
+    setResultadoMensaje(`Evento de ${duracionEvento} min asignado al turno ${turnoSeleccionado} exitosamente.`);
+    setTurnoSeleccionado('');
+    setDuracionEvento('');
   };
 
   // --- Lógica del calendario ---
@@ -417,7 +442,6 @@ export default function GestionDisponibilidad() {
                   ))}
                 </ul>
               </div>
-</div>
             {/* Botones del Modal de Confirmación (rama tp6-testing) */}
             <div className="flex gap-3 justify-end mt-4">
               <button 
@@ -436,13 +460,8 @@ export default function GestionDisponibilidad() {
               </button>
             </div>
           </div>
-          
-          {/* Cierre de Sección 4 (rama vale-US-005) */}
-          {errorAntelacion && <div data-cy="mensaje-error-antelacion" className="text-red-600 bg-red-50 border border-red-200 p-3 rounded text-sm font-medium">{errorAntelacion}</div>}
-          {mensajeExitoAntelacion && <div data-cy="mensaje-exito" className="text-green-700 bg-green-50 border border-green-200 p-3 rounded text-sm font-medium">{mensajeExitoAntelacion}</div>}
-          <button type="submit" data-cy="btn-guardar-reglas" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">Guardar Regla de Antelación</button>
-        </form>
-      </section>
+        </div>
+        )}
 
       {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
       <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -479,32 +498,30 @@ export default function GestionDisponibilidad() {
               <option value="45">45 min</option>
               <option value="60">60 min</option>
             </select>
-            </div>
           </div>
-        )}
 
-{/* Mensajes de feedback Asignar Evento */}
-            {resultadoMensaje && (
-              <div
-                data-cy="mensaje-resultado"
-                className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
-                    ? 'success text-green-600 bg-green-50 border-green-200'
-                    : 'error text-red-600 bg-red-50 border-red-200'
-                  }`}
-              >
-                {resultadoMensaje}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              data-cy="btn-guardar"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          {/* Mensajes de feedback Asignar Evento */}
+          {resultadoMensaje && (
+            <div
+              data-cy="mensaje-resultado"
+              className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
+                  ? 'text-green-600 bg-green-50 border-green-200'
+                  : 'text-red-600 bg-red-50 border-red-200'
+                }`}
             >
-              Guardar Evento
-            </button>
-          </form>
-        </section>
+              {resultadoMensaje}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            data-cy="btn-guardar"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          >
+            Guardar Evento
+          </button>
+        </form>
+      </section>
 
         {/* ── SECCIÓN 6: VISUALIZACIÓN DE CALENDARIO (US_008) ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
