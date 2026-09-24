@@ -37,10 +37,10 @@ function getFechaHoy(): string {
 }
 
 const NOMBRES_MESES = [
-  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
-const NOMBRES_DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const NOMBRES_DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function GestionDisponibilidad() {
@@ -139,10 +139,10 @@ export default function GestionDisponibilidad() {
 
   // --- Lógica del calendario ---
   const anio = mesVista.getFullYear();
-  const mes  = mesVista.getMonth();
-  const primerDia  = new Date(anio, mes, 1);
-  const ultimoDia  = new Date(anio, mes + 1, 0);
-  const offset     = (primerDia.getDay() + 6) % 7; // lunes = 0
+  const mes = mesVista.getMonth();
+  const primerDia = new Date(anio, mes, 1);
+  const ultimoDia = new Date(anio, mes + 1, 0);
+  const offset = (primerDia.getDay() + 6) % 7; // lunes = 0
   const totalCeldas = Math.ceil((offset + ultimoDia.getDate()) / 7) * 7;
   const celdas = Array.from({ length: totalCeldas });
   const hoyStr = getFechaHoy();
@@ -186,7 +186,7 @@ export default function GestionDisponibilidad() {
                 onChange={(e) => setDia(e.target.value)}
                 className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
                 <option value="">Seleccione un día...</option>
-                {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map((d) => (
+                {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -263,10 +263,10 @@ export default function GestionDisponibilidad() {
                   return <div key={i} />;
                 }
 
-                const fechaStr      = toStr(diaNum);
-                const esPasadoOHoy  = fechaStr <= hoyStr;
-                const esHoy         = fechaStr === hoyStr;
-                const tieneReserva  = DIAS_CON_RESERVAS.includes(fechaStr);
+                const fechaStr = toStr(diaNum);
+                const esPasadoOHoy = fechaStr <= hoyStr;
+                const esHoy = fechaStr === hoyStr;
+                const tieneReserva = DIAS_CON_RESERVAS.includes(fechaStr);
                 const estaBloqueado = diasBloqueados.includes(fechaStr);
                 const estaSeleccionado = diasSeleccionados.includes(fechaStr);
 
