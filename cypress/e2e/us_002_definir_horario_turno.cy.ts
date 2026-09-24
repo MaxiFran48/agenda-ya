@@ -8,8 +8,6 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
   });
 
   it('Debería crear un turno correctamente en un día habilitado (Flujo Exitoso)', () => {
-    // Arrange: Eliminar el turno precargado del Miércoles para que no haya superposición
-    cy.get('[data-cy="btn-eliminar-turno-miércoles"]').click();
 
     // Arrange: Identificar los inputs del Miércoles
     const inputInicio = cy.get('[data-cy="input-hora-inicio-miércoles"]');
@@ -24,10 +22,10 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
     cy.get('[data-cy="turno-item-miércoles"]')
       .should('contain.text', '09:00 - 10:00')
       .and('be.visible');
-    
+
     // Act: Guardar cambios generales
     cy.get('[data-cy="btn-guardar-global"]').click();
-    
+
     // Assert: Validar mensaje global de que la página respondió bien
     cy.get('[data-cy="mensaje-alerta-global"]')
       .should('be.visible')
@@ -38,7 +36,7 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
     // Arrange: Preparar el estado inicial con un turno válido ya creado
     const inputInicio = cy.get('[data-cy="input-hora-inicio-miércoles"]');
     const inputFin = cy.get('[data-cy="input-hora-fin-miércoles"]');
-    
+
     inputInicio.clear().type('09:00');
     inputFin.clear().type('10:00');
     cy.get('[data-cy="btn-agregar-turno-miércoles"]').click();
@@ -50,8 +48,8 @@ describe('US_002 - Definir horario de turno y validar superposición', () => {
 
     // Assert: Validar que el sistema rechaza la superposición
     // 1. El turno no se agrega a la lista (sigue habiendo 1 solo turno)
-    cy.get('[data-cy="turno-item-miércoles"]').should('have.length', 1); 
-    
+    cy.get('[data-cy="turno-item-miércoles"]').should('have.length', 1);
+
     // 2. Aparece el mensaje de error correspondiente
     cy.get('[data-cy="mensaje-error-turno-miércoles"]')
       .should('be.visible')
