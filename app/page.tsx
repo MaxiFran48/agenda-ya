@@ -354,9 +354,9 @@ export default function GestionDisponibilidad() {
           )}
         </section>
 
-        {/* ── SECCIÓN 3: CONFIGURAR ANTELACIÓN MÍNIMA ── */}
+        {/* ── SECCIÓN 4: CONFIGURAR ANTELACIÓN MÍNIMA ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">3. Configurar Antelación Mínima</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Configurar Antelación Mínima</h2>
           <form onSubmit={handleGuardarAntelacion} className="space-y-4">
             <div className="flex flex-col space-y-1">
               <label htmlFor="antelacion" className="font-medium text-sm text-gray-700">Antelación mínima (en horas):</label>
@@ -371,9 +371,9 @@ export default function GestionDisponibilidad() {
           </form>
         </section>
 
-        {/* SECCIÓN 4: ASIGNAR EVENTO A TURNO (US04) */}
+        {/* SECCIÓN 5: ASIGNAR EVENTO A TURNO (US04) */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Asignar Evento a Turno (US04)</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Asignar Evento a Turno (US04)</h2>
           
           <form onSubmit={handleAsignarEvento} className="space-y-4">
             <div className="flex flex-col space-y-1">
