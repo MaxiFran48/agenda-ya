@@ -1,4 +1,4 @@
-describe('AgendaYA - Gestión de Disponibilidad', () => {
+describe('US_005: Seleccionar días para bloquearlos (Componente Gestión de Disponibilidad)', () => {
   beforeEach(() => {
     // Visitar la página de gestión de disponibilidad antes de cada test
     cy.visit('/');

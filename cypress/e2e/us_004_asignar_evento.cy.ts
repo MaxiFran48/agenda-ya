@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-describe('AgendaYA - M02: Asignar Evento a Turno', () => {
+describe('US_004: Agregar/quitar tipos de eventos de turno en día de trabajo (Componente Asignar Evento a Turno)', () => {
   
   beforeEach(() => {
     cy.visit('http://localhost:3000') 
