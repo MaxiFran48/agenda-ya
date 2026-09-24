@@ -39,10 +39,17 @@ export default function ConfiguracionSemanal({
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
 
+  // Mocks de tipos de eventos predefinidos
+  const TIPOS_EVENTO_MOCK = [
+    { id: '1', nombre: 'Consulta General', duracion: 45 },
+    { id: '2', nombre: 'Revisión', duracion: 30 },
+    { id: '3', nombre: 'Consulta Larga', duracion: 60 },
+    { id: '4', nombre: 'Operación Menor', duracion: 120 },
+  ];
+
   // Estados para Asignar Eventos a Turnos
   const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
-  const [nombreEvento, setNombreEvento] = useState('');
-  const [duracionEvento, setDuracionEvento] = useState('');
+  const [tipoEventoSeleccionado, setTipoEventoSeleccionado] = useState('');
   const [resultadoMensaje, setResultadoMensaje] = useState('');
   const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
 
@@ -85,11 +92,14 @@ export default function ConfiguracionSemanal({
     setResultadoMensaje('');
     setResultadoTipo('');
 
-    if (!turnoSeleccionado || !nombreEvento || !duracionEvento) {
-      setResultadoMensaje('Debe completar todos los campos (turno, nombre y duración)');
+    if (!turnoSeleccionado || !tipoEventoSeleccionado) {
+      setResultadoMensaje('Debe seleccionar el turno y el tipo de evento');
       setResultadoTipo('error');
       return;
     }
+
+    const eventoMock = TIPOS_EVENTO_MOCK.find(e => e.id === tipoEventoSeleccionado);
+    if (!eventoMock) return;
 
     let diaIndex = -1;
     let turnoIndex = -1;
@@ -110,7 +120,7 @@ export default function ConfiguracionSemanal({
     // Validar superposición por duración
     const duracionTurno = aMinutos(turno.horaFin) - aMinutos(turno.horaInicio);
     const duracionOcupada = (turno.eventos || []).reduce((acc, e) => acc + e.duracion, 0);
-    const duracionNueva = Number(duracionEvento);
+    const duracionNueva = eventoMock.duracion;
 
     if (duracionOcupada + duracionNueva > duracionTurno) {
       setResultadoMensaje(`La duración excede el turno y se superpone con el siguiente.`);
@@ -122,15 +132,14 @@ export default function ConfiguracionSemanal({
     
     turno.eventos.push({
       id: `${Date.now()}`,
-      nombre: nombreEvento,
-      duracion: Number(duracionEvento)
+      nombre: eventoMock.nombre,
+      duracion: eventoMock.duracion
     });
 
     setDias(nuevosDias);
-    setResultadoMensaje(`Evento "${nombreEvento}" asignado exitosamente`);
+    setResultadoMensaje(`Evento "${eventoMock.nombre}" asignado exitosamente`);
     setResultadoTipo('success');
-    setNombreEvento('');
-    setDuracionEvento('');
+    setTipoEventoSeleccionado('');
   };
 
   const handleGuardar = async () => {
@@ -238,35 +247,22 @@ export default function ConfiguracionSemanal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="nombreEvento" className="font-medium text-sm text-gray-700">Nombre del Evento:</label>
-              <input 
-                id="nombreEvento"
-                type="text"
-                data-cy="input-nombre-evento"
-                value={nombreEvento}
-                onChange={(e) => setNombreEvento(e.target.value)}
-                placeholder="Ej. Consulta General"
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-            
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="duracionEvento" className="font-medium text-sm text-gray-700">Duración:</label>
-              <select 
-                id="duracionEvento"
-                data-cy="select-tipo-evento"
-                value={duracionEvento}
-                onChange={(e) => setDuracionEvento(e.target.value)}
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Seleccione duración...</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-              </select>
-            </div>
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="tipoEvento" className="font-medium text-sm text-gray-700">Tipo de Evento:</label>
+            <select 
+              id="tipoEvento"
+              data-cy="select-tipo-evento"
+              value={tipoEventoSeleccionado}
+              onChange={(e) => setTipoEventoSeleccionado(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Seleccione un tipo de evento...</option>
+              {TIPOS_EVENTO_MOCK.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre} ({e.duracion} min)
+                </option>
+              ))}
+            </select>
           </div>
 
           {resultadoMensaje && (
