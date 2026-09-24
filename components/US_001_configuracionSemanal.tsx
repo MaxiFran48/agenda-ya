@@ -157,7 +157,7 @@ export default function ConfiguracionSemanal({
     if (!turno.eventos) turno.eventos = [];
 
     turno.eventos.push({
-      id: `${Date.now()}`,
+      id: eventoMock.id,
       nombre: eventoMock.nombre,
       duracion: eventoMock.duracion
     });

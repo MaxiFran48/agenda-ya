@@ -26,7 +26,7 @@ const DIAS_INICIALES: DayConfig[] = [
       }
     ]
   },
-  { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
+  { diaSemana: 'Jueves', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
   { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
