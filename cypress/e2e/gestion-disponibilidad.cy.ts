@@ -1,58 +1,53 @@
 describe('AgendaYA - Gestión de Disponibilidad', () => {
   beforeEach(() => {
-    // Visitar la página de gestión de disponibilidad antes de cada test
     cy.visit('/');
+    // Validamos que el componente haya cargado y dibujado el calendario
+    cy.get('button[data-cy="dia-futuro-15"]').should('have.length.greaterThan', 0);
   });
 
   it('No debería permitir interactuar con una fecha pasada', () => {
-    // Arrange:
-    // El día pasado ya está renderizado en el DOM con su selector data-cy.
-    // Se espera que el botón (o el elemento del día) esté deshabilitado.
-    const diaPasado = cy.get('[data-cy="dia-pasado"]');
-
-    // Act:
-    // Intentamos hacer click sobre el día pasado.
-    diaPasado.click({ force: true });
-
-    // Assert:
-    // El elemento debe tener el atributo disabled (o estar marcado como no
-    // interactuable), lo que indica que la acción fue bloqueada.
-    diaPasado.should('be.disabled');
+    cy.get('[data-cy="dia-pasado"]').first().should('be.disabled');
   });
 
   it('Debería bloquear un día futuro sin reservas al confirmar', () => {
-    // Arrange:
-    // El día futuro está disponible para selección y el botón guardar existe.
-    const diaFuturo = cy.get('[data-cy="dia-futuro-15"]');
-    const btnGuardar = cy.get('[data-cy="btn-guardar"]');
+    // Buscamos un día futuro excluyendo los que tienen el atributo "title" (los que tienen reservas)
+    cy.get('button[data-cy="dia-futuro-15"]:not([title])')
+      .first()
+      .then(($btn) => {
+        // Guardamos el número del día para las aserciones finales
+        const numeroDia = $btn.text().trim();
 
-    // Act:
-    // Seleccionamos el día futuro y confirmamos el bloqueo.
-    diaFuturo.click();
-    btnGuardar.click();
+        // Clic natural directo al nodo de React sin forzar
+        cy.wrap($btn).click();
 
-    // Assert:
-    // Verificar que el día cambió de estilo visual (clase CSS de bloqueado)
-    // y que aparece el mensaje de confirmación en pantalla.
-    cy.get('[data-cy="dia-futuro-15"]').should('have.class', 'bloqueado');
-    cy.get('[data-cy="mensaje-confirmacion"]').should('be.visible');
+        // Esperamos a que la interfaz actualice el estado y clickeamos guardar
+        cy.get('[data-cy="btn-guardar"]').should('be.visible').click();
+
+        // Validamos que el mensaje de éxito aparezca
+        cy.get('[data-cy="mensaje-confirmacion"]').should('be.visible');
+
+        // Validamos que el día específico ahora esté deshabilitado y figure como "pasado" (bloqueado)
+        cy.contains('button[data-cy="dia-pasado"]', numeroDia).should('be.disabled');
+      });
   });
 
   it('Debería descartar los cambios sin aplicar el bloqueo', () => {
-    // Arrange:
-    // El día futuro está disponible y el botón descartar existe.
-    const diaFuturo = cy.get('[data-cy="dia-futuro-15"]');
-    const btnDescartar = cy.get('[data-cy="btn-descartar"]');
+    cy.get('button[data-cy="dia-futuro-15"]:not([title])')
+      .first()
+      .then(($btn) => {
+        const numeroDia = $btn.text().trim();
 
-    // Act:
-    // Seleccionamos el día futuro pero luego descartamos la acción.
-    diaFuturo.click();
-    btnDescartar.click();
+        cy.wrap($btn).click();
 
-    // Assert:
-    // El día NO debe tener la clase de bloqueado y el mensaje de
-    // confirmación no debe estar visible (los cambios fueron descartados).
-    cy.get('[data-cy="dia-futuro-15"]').should('not.have.class', 'bloqueado');
-    cy.get('[data-cy="mensaje-confirmacion"]').should('not.exist');
+        // Click en descartar
+        cy.get('[data-cy="btn-descartar"]').should('be.visible').click();
+
+        // El menú inferior debe desaparecer
+        cy.get('[data-cy="mensaje-confirmacion"]').should('not.exist');
+        cy.get('[data-cy="btn-guardar"]').should('not.exist');
+
+        // El día debe permanecer habilitado y con su data-cy original
+        cy.contains('button[data-cy="dia-futuro-15"]', numeroDia).should('not.be.disabled');
+      });
   });
 });
