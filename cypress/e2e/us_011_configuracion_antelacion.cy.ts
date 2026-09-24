@@ -1,4 +1,4 @@
-describe('AgendaYA - M02: Configuración de Antelación Mínima', () => {
+describe('US_011: Configuración de Antelación Mínima (Componente Configurar Antelación Mínima)', () => {
   it('Debería configurar y guardar la antelación mínima exitosamente', () => {
     cy.visit('/');
     cy.get('[data-cy="input-antelacion-horas"]').should('have.value', '0');

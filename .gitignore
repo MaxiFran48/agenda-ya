@@ -13,9 +13,21 @@
 # testing
 /coverage
 
+# cypress artifacts
+/cypress/videos/
+/cypress/screenshots/
+/cypress/downloads/
+/cypress/.cache
+
+# editors / IDE
+.vscode/
+.idea/
+*.swp
+
 # next.js
 /.next/
 /out/
+.cache
 
 # production
 /build
