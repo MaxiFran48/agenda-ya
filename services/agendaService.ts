@@ -5,7 +5,7 @@ export interface Turno {
 
 export interface Reserva {
     id?: number;
-    idTurno: number;
+    idTurno: string | number;
     tipoEvento: string;
     estado: string;
 }
@@ -41,10 +41,10 @@ export function verificarSuperposicionEvento(turnoActual: Turno, duracionNuevoEv
  * - US_004 - ESCENARIO 4: Verifica si existen reservas antes de disparar la advertencia.
  * - US_004 - ESCENARIO 5: Comprueba que el resultado sea un arreglo vacío para proceder sin alertas.
  */
-export function obtenerReservasPorTipoEvento(idTurno: number, tipoEvento: string, reservasActivas: Reserva[]): Reserva[] {
+export function obtenerReservasPorTipoEvento(idTurno: string | number, tipoEvento: string, reservasActivas: Reserva[]): Reserva[] {
     if (!idTurno || !tipoEvento || !Array.isArray(reservasActivas)) return [];
     return reservasActivas.filter(
-        reserva => reserva.idTurno === idTurno && 
+        reserva => String(reserva.idTurno) === String(idTurno) && 
                    reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase() && 
                    reserva.estado === 'Activa'
     );
@@ -55,10 +55,10 @@ export function obtenerReservasPorTipoEvento(idTurno: number, tipoEvento: string
  * * VÍNCULO CON CRITERIOS DE ACEPTACIÓN:
  * - US_004 - ESCENARIO 3: Setea el estado a 'Cancelada' en la base de datos simulada.
  */
-export function cancelarReservasPorTipoEvento(idTurno: number, tipoEvento: string, todasLasReservas: Reserva[]): Reserva[] {
+export function cancelarReservasPorTipoEvento(idTurno: string | number, tipoEvento: string, todasLasReservas: Reserva[]): Reserva[] {
     if (!Array.isArray(todasLasReservas)) return [];
     return todasLasReservas.map(reserva => {
-        if (reserva.idTurno === idTurno && reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase()) {
+        if (String(reserva.idTurno) === String(idTurno) && reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase()) {
             return { ...reserva, estado: 'Cancelada' };
         }
         return reserva;

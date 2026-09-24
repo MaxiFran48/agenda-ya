@@ -75,12 +75,12 @@ export function esFechaValidaParaBloqueo(
     return { estado: 'ERROR' };
   }
 
-  // 4. Fecha futura con reservas → requiere reagendamiento
+  // 4. Fecha futura con reservas → REQUIERE_REAGENDAMIENTO
   if (tieneReservas) {
     return { estado: 'REQUIERE_REAGENDAMIENTO', urlRedireccion: '/reagendar-turnos' };
   }
 
-  // 5. Fecha futura sin reservas → éxito
+  // 5. Fecha futura sin reservas → éxito (permite selección temporal)
   return { estado: 'EXITO' };
 }
 
@@ -96,20 +96,3 @@ export function descartarSeleccion(diasSeleccionados: string[]): string[] {
   return [];
 }
 
-/**
- * Valida si un turno cumple con la antelación mínima requerida.
- */
-export function validarVentanaAntelacion(horaTurno: string, horaActual: string, antelacionMinimaHoras: number): boolean {
-  if (!horaTurno || !horaActual) {
-    throw new Error('Parámetros de horario inválidos');
-  }
-  const turno = new Date(horaTurno);
-  const actual = new Date(horaActual);
-  if (isNaN(turno.getTime()) || isNaN(actual.getTime())) {
-    throw new Error('Parámetros de horario inválidos');
-  }
-  const diferenciaMilisegundos = turno.getTime() - actual.getTime();
-  if (diferenciaMilisegundos < 0) return false;
-  const diferenciaMinutos = Math.floor(diferenciaMilisegundos / 1000 / 60);
-  return diferenciaMinutos >= (antelacionMinimaHoras * 60);
-}

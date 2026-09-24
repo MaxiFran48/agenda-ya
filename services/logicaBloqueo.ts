@@ -1,51 +1,47 @@
-export interface Turno {
-  id: number;
-  horario: string;
-  estado: 'Activo' | 'Cancelado';
-}
+export type AccionBloqueo = 'CONFIRMAR' | 'ABORTAR' | 'NINGUNA';
 
-export interface ResultadoBloqueo {
-  turnos: Turno[];
-  mensaje: string;
+export interface ResultadoConfirmacion {
   exito: boolean;
+  mensaje: string;
+  estadoTurnos: 'Cancelado' | 'Intacto';
 }
 
 export function procesarConfirmacionBloqueo(
-  dia: string | null | undefined,
-  turnosExistentes: Turno[] | null | undefined,
-  accionConfirmada: boolean
-): ResultadoBloqueo {
-  if (!dia || dia.trim() === '') {
-    throw new Error('Parámetros inválidos: el día es obligatorio.');
+  dia: string | null,
+  tieneReservas: boolean,
+  accion: AccionBloqueo
+): ResultadoConfirmacion {
+  if (dia === null) {
+    return { exito: false, mensaje: 'Error: Día nulo', estadoTurnos: 'Intacto' };
   }
 
-  if (!Array.isArray(turnosExistentes)) {
-    throw new Error('Parámetros inválidos: turnosExistentes debe ser un arreglo.');
+  if (typeof dia !== 'string' || dia.trim() === '') {
+    return { exito: false, mensaje: 'Error: Parámetros inválidos', estadoTurnos: 'Intacto' };
   }
 
-  if (turnosExistentes.length === 0) {
-    return {
-      turnos: [],
-      mensaje: 'Día bloqueado exitosamente. No había turnos previos.',
-      exito: true
+  if (!tieneReservas) {
+    return { 
+      exito: true, 
+      mensaje: 'Bloqueo añadido exitosamente', 
+      estadoTurnos: 'Intacto' 
     };
   }
 
-  if (accionConfirmada) {
-    const turnosModificados = turnosExistentes.map(turno => ({
-      ...turno,
-      estado: 'Cancelado' as const
-    }));
-    return {
-      turnos: turnosModificados,
-      mensaje: 'Bloqueo añadido, el mismo se notificará al guardar los cambios',
-      exito: true
-    };
-  } else {
-    return {
-      turnos: [...turnosExistentes],
-      mensaje: 'Acción cancelada. El día no fue bloqueado.',
-      exito: false
+  if (accion === 'CONFIRMAR') {
+    return { 
+      exito: true, 
+      mensaje: 'Bloqueo añadido, el mismo se notificará al guardar los cambios', 
+      estadoTurnos: 'Cancelado' 
     };
   }
+
+  if (accion === 'ABORTAR') {
+    return { 
+      exito: false, 
+      mensaje: 'Bloqueo abortado', 
+      estadoTurnos: 'Intacto' 
+    };
+  }
+
+  return { exito: false, mensaje: 'Error: Acción inválida', estadoTurnos: 'Intacto' };
 }
