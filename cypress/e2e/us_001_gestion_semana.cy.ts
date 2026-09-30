@@ -11,6 +11,9 @@ describe('AgendaYA - US_001 - CP-001-01: Habilitación de día para trabajar (Co
     // Arrange: preparar el estado inicial
     // 1. El dashboard muestra los días: habilitados en blanco y deshabilitados en gris.
     //    Martes inicia deshabilitado (gris) y sin casilla marcada.
+    //    Scroll para centrar la tarjeta de Martes en el encuadre de grabación
+    //    (block: center evita que el checkbox quede cortado sobre el borde superior).
+    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({ block: 'center' });
     cy.get('[data-cy="dia-contenedor-martes"]').should('have.class', 'bg-gray-200');
     cy.get('[data-cy="dia-checkbox-martes"]').should('not.be.checked');
 
@@ -57,8 +60,14 @@ describe('AgendaYA - US_001 - CP-001-01: Habilitación de día para trabajar (Co
       'Cambios guardados exitosamente'
     );
 
-    // Assert: post-condiciones, Martes quedó marcado y en blanco
+    // Assert: post-condiciones, Martes quedó marcado y en blanco.
+    // Scroll para centrar la tarjeta de Martes en el encuadre de grabación
+    // (block: center evita que el checkbox quede cortado sobre el borde superior).
+    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({ block: 'center' });
     cy.get('[data-cy="dia-checkbox-martes"]').should('be.checked');
     cy.get('[data-cy="dia-contenedor-martes"]').should('have.class', 'bg-white');
+
+    // Pausa breve para que el estado final (día seleccionado) quede visible en el video.
+    cy.wait(2000);
   });
 });
