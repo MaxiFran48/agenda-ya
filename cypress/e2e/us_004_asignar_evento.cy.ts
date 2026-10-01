@@ -6,51 +6,132 @@ describe('US_004: Agregar/quitar tipos de eventos de turno en día de trabajo (C
     cy.visit('http://localhost:3000') 
   })
 
-  it('Habilitar tipo de evento en un turno sin superposición (Caso Positivo)', () => {
-    // Arrange: preparar el estado inicial
-    // Seleccionamos que el siguiente turno empieza a las 11:00 y el evento dura 45 min
-    cy.get('[data-cy="select-siguiente-turno"]').select('11:00')
-    cy.get('[data-cy="select-tipo-evento"]').select('45')
+  it('Habilitar tipo de evento en un turno (Caso Positivo)', () => {
+    // Arrange
+    cy.get('[data-cy="dia-checkbox-lunes"]').check()
+    cy.get('[data-cy="input-hora-inicio-lunes"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-lunes"]').type('12:00')
+    cy.get('[data-cy="btn-agregar-turno-lunes"]').click()
 
-    // Act: ejecutar la acción principal
-    cy.get('[data-cy="btn-guardar"]').click()
+    cy.get('[data-cy="select-siguiente-turno"]').select('Lunes: 10:00 - 12:00')
+    
+    // Seleccionar evento predefinido: "Consulta General (45 min)" tiene el value "1"
+    cy.get('[data-cy="select-tipo-evento"]').select('1')
+    
+    // Act
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
 
-    // Assert: verificar el resultado esperado
-    // Buscamos que el mensaje sea visible, tenga color de éxito y el texto correcto
+    // Assert
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'success')
-      .and('contain', 'Cambios guardados exitosamente')
+      .and('have.class', 'text-green-700')
+      .and('contain', 'Evento "Consulta General" asignado exitosamente')
+
+    cy.get('[data-cy="turno-item-lunes"]').should('contain', 'Consulta General (45m)')
   })
 
   it('Error al habilitar tipo de evento con superposición (Caso Negativo)', () => {
-    // Arrange: preparar el estado inicial
-    // Seleccionamos que el siguiente turno empieza a las 10:30 y el evento dura 60 min
-    cy.get('[data-cy="select-siguiente-turno"]').select('10:30')
-    cy.get('[data-cy="select-tipo-evento"]').select('60')
+    // Arrange
+    cy.get('[data-cy="dia-checkbox-jueves"]').check()
+    cy.get('[data-cy="input-hora-inicio-jueves"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-jueves"]').type('10:30')
+    cy.get('[data-cy="btn-agregar-turno-jueves"]').click()
 
-    // Act: ejecutar la acción principal
-    cy.get('[data-cy="btn-guardar"]').click()
+    cy.get('[data-cy="select-siguiente-turno"]').select('Jueves: 10:00 - 10:30')
+    
+    // Seleccionamos un evento que dura 60 min, e.g. "Consulta Larga" (value "3")
+    cy.get('[data-cy="select-tipo-evento"]').select('3')
+    
+    // Act
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
 
-    // Assert: verificar el resultado esperado
-    // Buscamos que el mensaje sea visible, tenga color de error y el texto de superposición
+    //Assert
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'error')
-      .and('contain', 'Superposición entre los turnos 10:00 y 10:30')
+      .and('have.class', 'text-red-700')
+      .and('contain', 'La duración excede el turno y se superpone con el siguiente.')
   })
 
   it('Error al guardar si falta completar un campo (Validación)', () => {
-    // Arrange: Dejamos el tipo de evento vacío, solo seleccionamos el turno
-    cy.get('[data-cy="select-siguiente-turno"]').select('11:00')
+    //Arrange
+    cy.get('[data-cy="dia-checkbox-martes"]').check()
+    cy.get('[data-cy="input-hora-inicio-martes"]').type('14:00')
+    cy.get('[data-cy="input-hora-fin-martes"]').type('16:00')
+    cy.get('[data-cy="btn-agregar-turno-martes"]').click()
 
-    // Act: intentamos guardar
-    cy.get('[data-cy="btn-guardar"]').click()
-
-    // Assert: el mensaje de validación debe aparecer
+    // Act
+    cy.get('[data-cy="select-siguiente-turno"]').select('Martes: 14:00 - 16:00')
+    
+    // No se completa el tipo de evento
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
+    
+    // Assert
     cy.get('[data-cy="mensaje-resultado"]')
       .should('be.visible')
-      .and('have.class', 'error')
-      .and('contain', 'Debe seleccionar el siguiente turno y el tipo de evento')
+      .and('have.class', 'text-red-700')
+      .and('contain', 'Debe seleccionar el turno y el tipo de evento')
+  })
+
+  it('Quitar tipo de evento sin reservas (Caso Positivo)', () => {
+    // Arrange
+    cy.get('[data-cy="dia-checkbox-lunes"]').check()
+    cy.get('[data-cy="input-hora-inicio-lunes"]').type('10:00')
+    cy.get('[data-cy="input-hora-fin-lunes"]').type('12:00')
+    cy.get('[data-cy="btn-agregar-turno-lunes"]').click()
+    cy.get('[data-cy="select-siguiente-turno"]').select('Lunes: 10:00 - 12:00')
+    cy.get('[data-cy="select-tipo-evento"]').select('1') 
+    cy.wait(200)
+    cy.get('[data-cy="btn-guardar-evento"]').click()
+
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-1"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Cambios guardados exitosamente')
+    cy.get('[data-cy="turno-item-lunes"]').should('not.contain', 'Consulta General (45m)')
+  })
+
+  it('Quitar tipo de evento con reservas y cancelar (Advertencia)', () => {
+    // Arrange (Miércoles viene configurado con reservas mockeadas por defecto)
+    
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-3"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="advertencia-reservas-global"]').should('be.visible')
+      .and('contain', 'Se han eliminado tipos de eventos que tenían reservas activas')
+    
+    cy.get('[data-cy="btn-confirmar-cancelar-global"]').click()
+
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Reservas del tipo de evento Consulta Larga para el día Miércoles canceladas')
+  })
+
+  it('Quitar tipo de evento con reservas y descartar cambios (Advertencia)', () => {
+    // Arrange
+    
+    // Act
+    cy.get('[data-cy="btn-eliminar-evento-3"]').click()
+    cy.get('[data-cy="btn-guardar-global"]').click()
+
+    // Assert
+    cy.get('[data-cy="advertencia-reservas-global"]').should('be.visible')
+      .and('contain', 'Se han eliminado tipos de eventos que tenían reservas activas')
+
+    cy.get('[data-cy="btn-confirmar-descartar-global"]').click()
+
+    cy.get('[data-cy="mensaje-alerta-global"]')
+      .should('be.visible')
+      .and('contain', 'Cambios descartados')
+    
+    cy.get('[data-cy="turno-item-miércoles"]').should('contain', 'Consulta Larga (60m)')
   })
 })

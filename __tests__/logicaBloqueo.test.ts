@@ -1,48 +1,38 @@
-import { procesarConfirmacionBloqueo, Turno } from '../services/logicaBloqueo';
+import { procesarConfirmacionBloqueo } from '../services/logicaBloqueo';
 
-describe('procesarConfirmacionBloqueo', () => {
-  const diaPrueba = '20/06/2026';
-  const turnosMock: Turno[] = [
-    { id: 1, horario: '10:00', estado: 'Activo' },
-    { id: 2, horario: '11:00', estado: 'Activo' }
-  ];
-
-  it('1) Debe manejar correctamente un día sin reservas', () => {
-    const resultado = procesarConfirmacionBloqueo(diaPrueba, [], true);
-    
+describe('logicaBloqueo', () => {
+  it('debería retornar éxito si el día no tiene reservas (día sin reservas)', () => {
+    const resultado = procesarConfirmacionBloqueo('2026-06-20', false, 'NINGUNA');
     expect(resultado.exito).toBe(true);
-    expect(resultado.turnos).toEqual([]);
-    expect(resultado.mensaje).toBe('Día bloqueado exitosamente. No había turnos previos.');
+    expect(resultado.mensaje).toBe('Bloqueo añadido exitosamente');
+    expect(resultado.estadoTurnos).toBe('Intacto');
   });
 
-  it('2) Debe cancelar todos los turnos y devolver mensaje de éxito cuando se confirma el bloqueo con reservas', () => {
-    const resultado = procesarConfirmacionBloqueo(diaPrueba, turnosMock, true);
-    
+  it('debería retornar éxito y cancelar turnos si se confirma (bloqueo con confirmación)', () => {
+    const resultado = procesarConfirmacionBloqueo('2026-06-20', true, 'CONFIRMAR');
     expect(resultado.exito).toBe(true);
     expect(resultado.mensaje).toBe('Bloqueo añadido, el mismo se notificará al guardar los cambios');
-    expect(resultado.turnos).toHaveLength(2);
-    expect(resultado.turnos[0].estado).toBe('Cancelado');
-    expect(resultado.turnos[1].estado).toBe('Cancelado');
+    expect(resultado.estadoTurnos).toBe('Cancelado');
   });
 
-  it('3) Debe mantener los turnos intactos cuando se aborta el bloqueo', () => {
-    const resultado = procesarConfirmacionBloqueo(diaPrueba, turnosMock, false);
-    
+  it('debería abortar sin éxito y mantener turnos intactos si se aborta (bloqueo abortado)', () => {
+    const resultado = procesarConfirmacionBloqueo('2026-06-20', true, 'ABORTAR');
     expect(resultado.exito).toBe(false);
-    expect(resultado.mensaje).toBe('Acción cancelada. El día no fue bloqueado.');
-    expect(resultado.turnos).toEqual(turnosMock);
+    expect(resultado.mensaje).toBe('Bloqueo abortado');
+    expect(resultado.estadoTurnos).toBe('Intacto');
   });
 
-  it('4) Debe lanzar un error si el día está vacío, nulo o indefinido', () => {
-    expect(() => procesarConfirmacionBloqueo('', turnosMock, true)).toThrow('Parámetros inválidos: el día es obligatorio.');
-    expect(() => procesarConfirmacionBloqueo('   ', turnosMock, true)).toThrow('Parámetros inválidos: el día es obligatorio.');
-    expect(() => procesarConfirmacionBloqueo(null as any, turnosMock, true)).toThrow('Parámetros inválidos: el día es obligatorio.');
-    expect(() => procesarConfirmacionBloqueo(undefined as any, turnosMock, true)).toThrow('Parámetros inválidos: el día es obligatorio.');
+  it('debería retornar error para parámetros inválidos (parámetros inválidos)', () => {
+    const resultado = procesarConfirmacionBloqueo('', true, 'CONFIRMAR');
+    expect(resultado.exito).toBe(false);
+    expect(resultado.mensaje).toBe('Error: Parámetros inválidos');
+    expect(resultado.estadoTurnos).toBe('Intacto');
   });
 
-  it('5) Debe lanzar un error si turnosExistentes no es un arreglo válido', () => {
-    expect(() => procesarConfirmacionBloqueo(diaPrueba, null as any, true)).toThrow('Parámetros inválidos: turnosExistentes debe ser un arreglo.');
-    expect(() => procesarConfirmacionBloqueo(diaPrueba, undefined as any, true)).toThrow('Parámetros inválidos: turnosExistentes debe ser un arreglo.');
-    expect(() => procesarConfirmacionBloqueo(diaPrueba, {} as any, true)).toThrow('Parámetros inválidos: turnosExistentes debe ser un arreglo.');
+  it('debería retornar error para día nulo (día nulo)', () => {
+    const resultado = procesarConfirmacionBloqueo(null, true, 'CONFIRMAR');
+    expect(resultado.exito).toBe(false);
+    expect(resultado.mensaje).toBe('Error: Día nulo');
+    expect(resultado.estadoTurnos).toBe('Intacto');
   });
 });

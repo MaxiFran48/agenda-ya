@@ -132,4 +132,37 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
     );
     expect(guardarEstadoDia).not.toHaveBeenCalled();
   });
+
+  test('Escenario 5: Guardado sin cambios pendientes, el día vuelve a su estado original (Martes)', async () => {
+    // Arrange: preparar el estado inicial
+    render(<ConfiguracionSemanal />);
+
+    const contenedorMartes = screen.getByTestId('dia-contenedor-martes');
+    const checkboxMartes = screen.getByTestId('dia-checkbox-martes');
+    expect(contenedorMartes).toHaveClass('bg-white');
+    expect(checkboxMartes).toBeChecked();
+
+    // Act: ejecutar la acción principal
+    // Se deshabilita Martes y luego se vuelve a habilitar, dejando el día
+    // igual que en el estado guardado (no queda ningún cambio pendiente).
+    fireEvent.click(checkboxMartes);
+    expect(checkboxMartes).not.toBeChecked();
+    expect(contenedorMartes).toHaveClass('bg-gray-200');
+
+    fireEvent.click(checkboxMartes);
+    expect(checkboxMartes).toBeChecked();
+    expect(contenedorMartes).toHaveClass('bg-white');
+
+    // Se intenta guardar sin cambios reales.
+    fireEvent.click(screen.getByTestId('btn-guardar-global'));
+
+    // Assert: verificar el resultado esperado
+    // No se dispara la API porque no hay diferencias contra el estado guardado.
+    await waitFor(() => {
+      expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
+        'No hay cambios pendientes'
+      );
+    });
+    expect(guardarEstadoDia).not.toHaveBeenCalled();
+  });
 });
