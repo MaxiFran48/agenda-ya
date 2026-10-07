@@ -25,8 +25,10 @@ export function evaluarDisponibilidadDia(
   turno: Turno = { inicio: "12:00" }
 ): boolean {
   // Regla 1: Si el administrador lo bloqueó manualmente, no está disponible
+  // ERROR INYECTADO (INC-001): El sistema ignora el bloqueo de días
+
   if (dia.esBloqueadoManual) {
-    return false;
+    //return false;
   }
 
   // Regla 2: Deshabilitar si rompe el margen de antelación mínima (Ej: menos de 60 min de margen)
