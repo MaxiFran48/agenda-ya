@@ -6,7 +6,9 @@ describe('US_008: Visualización de calendario público (Componente Visualizaci�
   });
 
   it('Debería mostrar la sección de visualización de calendario como componente enumerado', () => {
-    cy.contains('h2', '6. Visualización de calendario (US_008)').should('be.visible');
+    cy.contains('h2', '6. Visualización de calendario (US_008)').should(
+      'be.visible',
+    );
     cy.get('[data-cy="dia-15"]').should('be.visible');
     cy.get('[data-cy="dia-15"]').should('be.enabled');
   });

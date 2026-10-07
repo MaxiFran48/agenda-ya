@@ -9,9 +9,9 @@ describe('US_005: Seleccionar días para bloquearlos (Componente Gestión de Dis
   it('No debería permitir interactuar con una fecha pasada', () => {
     // Arrange:
     // El primer día pasado del mes siempre está deshabilitado.
-    
+
     // Act:
-    
+
     // Assert:
     cy.get('[data-cy^="dia-pasado-"]').first().should('be.disabled');
   });

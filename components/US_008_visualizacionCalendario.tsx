@@ -18,7 +18,9 @@ export default function VisualizacionCalendarioPublico() {
   const handleDayClick = (dia: number) => {
     // Si el día está disponible, simulamos que selecciona la fecha
     if (DIAS_DISPONIBLES.includes(dia)) {
-      setMensajeInteraccion(`✓ Has seleccionado el día ${dia} de Junio de 2026 para reservar.`);
+      setMensajeInteraccion(
+        `✓ Has seleccionado el día ${dia} de Junio de 2026 para reservar.`,
+      );
     }
     // Si el día NO está disponible, ignoramos el evento táctil/click
     // para cumplir con el CP-008-02
@@ -30,7 +32,9 @@ export default function VisualizacionCalendarioPublico() {
       <div className="w-full bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
         {/* Header del Calendario */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-center">
-          <h3 className="text-2xl font-bold text-white tracking-tight">Reserva tu Turno</h3>
+          <h3 className="text-2xl font-bold text-white tracking-tight">
+            Reserva tu Turno
+          </h3>
           <p className="text-blue-100 font-semibold mt-1">Junio 2026</p>
         </div>
 
@@ -38,7 +42,10 @@ export default function VisualizacionCalendarioPublico() {
           {/* Días de la semana */}
           <div className="grid grid-cols-7 gap-2 mb-4">
             {DIAS_SEMANA.map((dia) => (
-              <div key={dia} className="text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div
+                key={dia}
+                className="text-center text-xs font-bold text-gray-500 uppercase tracking-wider"
+              >
                 {dia}
               </div>
             ))}
@@ -62,7 +69,11 @@ export default function VisualizacionCalendarioPublico() {
                   data-testid={`dia-${dia}`}
                   data-cy={`dia-${dia}`}
                   className={`aspect-square flex items-center justify-center rounded-xl transition-all duration-200 text-sm ${buttonClasses}`}
-                  aria-label={esDisponible ? `Día ${dia} disponible` : `Día ${dia} no disponible`}
+                  aria-label={
+                    esDisponible
+                      ? `Día ${dia} disponible`
+                      : `Día ${dia} no disponible`
+                  }
                 >
                   {dia}
                 </button>
@@ -74,11 +85,15 @@ export default function VisualizacionCalendarioPublico() {
           <div className="mt-8 flex flex-col gap-3 pt-5 border-t border-gray-200">
             <div className="flex items-center gap-3 text-sm">
               <div className="w-4 h-4 rounded-md bg-blue-600"></div>
-              <span className="text-gray-600 font-medium">Días con turnos disponibles</span>
+              <span className="text-gray-600 font-medium">
+                Días con turnos disponibles
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <div className="w-4 h-4 rounded-md bg-gray-200 border border-gray-300"></div>
-              <span className="text-gray-400">Sin turnos configurados / Inhabilitado</span>
+              <span className="text-gray-400">
+                Sin turnos configurados / Inhabilitado
+              </span>
             </div>
           </div>
         </div>

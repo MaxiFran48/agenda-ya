@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 
 // Mock del servicio de API
 jest.mock('../services/turnos', () => ({
-  eliminarTurnoAPI: jest.fn()
+  eliminarTurnoAPI: jest.fn(),
 }));
 
 // Mock del router de Next.js
 jest.mock('next/navigation', () => ({
-  useRouter: jest.fn()
+  useRouter: jest.fn(),
 }));
 
 describe('US_003: Eliminar turno', () => {
@@ -48,7 +48,9 @@ describe('US_003: Eliminar turno', () => {
       // El elemento gráfico desaparece
       expect(screen.queryByTestId('turno-elemento')).not.toBeInTheDocument();
       // Se muestra el mensaje "Cambios guardados exitosamente"
-      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent('Cambios guardados exitosamente');
+      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
+        'Cambios guardados exitosamente',
+      );
     });
   });
 
@@ -82,17 +84,21 @@ describe('US_003: Eliminar turno', () => {
     await waitFor(() => {
       // Guarda los cambios
       expect(eliminarTurnoAPI).toHaveBeenCalledWith('2', true, 'cancelar');
-      
+
       // El elemento gráfico desaparece
       expect(screen.queryByTestId('turno-elemento')).not.toBeInTheDocument();
-      
+
       // Muestra "Cambios guardados exitosamente" y "Reservas para el día Y canceladas"
       // (En la implementación mock se concatenaron en el mismo mensaje para facilitar el testeo,
       // pero se verifica que ambos textos estén presentes).
       const mensajeAlerta = screen.getByTestId('mensaje-alerta');
-      expect(mensajeAlerta.textContent).toContain('Cambios guardados exitosamente');
-      expect(mensajeAlerta.textContent).toContain('Reservas para el día Y canceladas');
-      
+      expect(mensajeAlerta.textContent).toContain(
+        'Cambios guardados exitosamente',
+      );
+      expect(mensajeAlerta.textContent).toContain(
+        'Reservas para el día Y canceladas',
+      );
+
       // Redirige a la funcionalidad de reprogramar turnos
       expect(mockPush).toHaveBeenCalledWith('/reprogramar-turnos');
     });
@@ -127,10 +133,12 @@ describe('US_003: Eliminar turno', () => {
     await waitFor(() => {
       // El elemento gráfico del turno vuelve a aparecer (o se mantiene)
       expect(screen.getByTestId('turno-elemento')).toBeInTheDocument();
-      
+
       // Muestra "Cambios descartados"
-      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent('Cambios descartados');
-      
+      expect(screen.getByTestId('mensaje-alerta')).toHaveTextContent(
+        'Cambios descartados',
+      );
+
       // No se guarda nada
       expect(eliminarTurnoAPI).not.toHaveBeenCalled();
     });

@@ -26,9 +26,7 @@ export interface ResultadoError {
 }
 
 export type ResultadoBloqueo =
-  | ResultadoExito
-  | ResultadoRequiereReagendamiento
-  | ResultadoError;
+  ResultadoExito | ResultadoRequiereReagendamiento | ResultadoError;
 
 // ─── Funciones ────────────────────────────────────────────────────────────────
 
@@ -77,7 +75,10 @@ export function esFechaValidaParaBloqueo(
 
   // 4. Fecha futura con reservas → REQUIERE_REAGENDAMIENTO
   if (tieneReservas) {
-    return { estado: 'REQUIERE_REAGENDAMIENTO', urlRedireccion: '/reagendar-turnos' };
+    return {
+      estado: 'REQUIERE_REAGENDAMIENTO',
+      urlRedireccion: '/reagendar-turnos',
+    };
   }
 
   // 5. Fecha futura sin reservas → éxito (permite selección temporal)
@@ -95,4 +96,3 @@ export function descartarSeleccion(diasSeleccionados: string[]): string[] {
   void diasSeleccionados;
   return [];
 }
-

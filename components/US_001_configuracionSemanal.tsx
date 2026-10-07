@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 import { guardarEstadoDia } from '../services/persistenciaEstadoDia';
-import { obtenerReservasPorTipoEvento } from '../services/agendaService';
+import {
+  obtenerReservasPorTipoEvento,
+  type Reserva,
+} from '../services/agendaService';
 import GestionDiaTrabajo, { Turno } from './US_001_gestionDiaTrabajo';
 
 function aMinutos(hora: string): number {
@@ -20,13 +23,55 @@ export interface DayConfig {
 
 function crearDiasIniciales(): DayConfig[] {
   return [
-    { diaSemana: 'Lunes', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
-    { diaSemana: 'Martes', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
-    { diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
-    { diaSemana: 'Jueves', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
-    { diaSemana: 'Viernes', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [] },
-    { diaSemana: 'Sábado', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-    { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+    {
+      diaSemana: 'Lunes',
+      habilitado: true,
+      guardadoHabilitado: true,
+      tieneReservas: true,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Martes',
+      habilitado: true,
+      guardadoHabilitado: true,
+      tieneReservas: false,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Miércoles',
+      habilitado: true,
+      guardadoHabilitado: true,
+      tieneReservas: true,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Jueves',
+      habilitado: true,
+      guardadoHabilitado: true,
+      tieneReservas: false,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Viernes',
+      habilitado: true,
+      guardadoHabilitado: true,
+      tieneReservas: true,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Sábado',
+      habilitado: false,
+      guardadoHabilitado: false,
+      tieneReservas: false,
+      turnos: [],
+    },
+    {
+      diaSemana: 'Domingo',
+      habilitado: false,
+      guardadoHabilitado: false,
+      tieneReservas: false,
+      turnos: [],
+    },
   ];
 }
 
@@ -35,17 +80,30 @@ export default function ConfiguracionSemanal({
 }: {
   diasIniciales?: DayConfig[];
 }) {
-  const [diasGuardados, setDiasGuardados] = useState<DayConfig[]>(() => diasIniciales ?? crearDiasIniciales());
-  const [dias, setDias] = useState<DayConfig[]>(() => JSON.parse(JSON.stringify(diasGuardados)));
+  const [diasGuardados, setDiasGuardados] = useState<DayConfig[]>(
+    () => diasIniciales ?? crearDiasIniciales(),
+  );
+  const [dias, setDias] = useState<DayConfig[]>(() =>
+    JSON.parse(JSON.stringify(diasGuardados)),
+  );
   const [mensaje, setMensaje] = useState('');
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false);
   const [diasConAdvertencia, setDiasConAdvertencia] = useState<string[]>([]);
 
-  const [eventosAEliminar, setEventosAEliminar] = useState<{ dia: string, idTurno: string, idEvento: string, nombre: string }[]>([]);
-  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<{ dia: string, idTurno: string, nombre: string }[]>([]);
+  const [eventosAEliminar, setEventosAEliminar] = useState<
+    { dia: string; idTurno: string; idEvento: string; nombre: string }[]
+  >([]);
+  const [eventosConAdvertencia, setEventosConAdvertencia] = useState<
+    { dia: string; idTurno: string; nombre: string }[]
+  >([]);
 
-  const [reservasMock] = useState<any[]>([
-    { id: 1, idTurno: 't-mock-1', tipoEvento: 'Consulta Larga', estado: 'Activa' },
+  const [reservasMock] = useState<Reserva[]>([
+    {
+      id: 1,
+      idTurno: 't-mock-1',
+      tipoEvento: 'Consulta Larga',
+      estado: 'Activa',
+    },
   ]);
 
   // Mocks de tipos de eventos predefinidos
@@ -60,7 +118,9 @@ export default function ConfiguracionSemanal({
   const [turnoSeleccionado, setTurnoSeleccionado] = useState('');
   const [tipoEventoSeleccionado, setTipoEventoSeleccionado] = useState('');
   const [resultadoMensaje, setResultadoMensaje] = useState('');
-  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>('');
+  const [resultadoTipo, setResultadoTipo] = useState<'success' | 'error' | ''>(
+    '',
+  );
 
   const handleToggle = (index: number) => {
     const nuevosDias = [...dias];
@@ -68,27 +128,37 @@ export default function ConfiguracionSemanal({
     setDias(nuevosDias);
   };
 
-  const handleAgregarTurno = (dia: string, horaInicio: string, horaFin: string) => {
+  const handleAgregarTurno = (
+    dia: string,
+    horaInicio: string,
+    horaFin: string,
+  ) => {
     setDias(
       dias.map((d) =>
         d.diaSemana === dia
           ? {
-            ...d,
-            turnos: [
-              ...d.turnos,
-              { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, horaInicio, horaFin },
-            ],
-          }
-          : d
-      )
+              ...d,
+              turnos: [
+                ...d.turnos,
+                {
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                  horaInicio,
+                  horaFin,
+                },
+              ],
+            }
+          : d,
+      ),
     );
   };
 
   const handleEliminarTurno = (dia: string, id: string) => {
     setDias(
       dias.map((d) =>
-        d.diaSemana === dia ? { ...d, turnos: d.turnos.filter((t) => t.id !== id) } : d
-      )
+        d.diaSemana === dia
+          ? { ...d, turnos: d.turnos.filter((t) => t.id !== id) }
+          : d,
+      ),
     );
     // Si se eliminó el turno seleccionado, limpiamos el state
     if (turnoSeleccionado === id) {
@@ -96,20 +166,32 @@ export default function ConfiguracionSemanal({
     }
   };
 
-  const handleEliminarEvento = (dia: string, idTurno: string, idEvento: string, nombre: string) => {
-    setEventosAEliminar(prev => [...prev, { dia, idTurno, idEvento, nombre }]);
+  const handleEliminarEvento = (
+    dia: string,
+    idTurno: string,
+    idEvento: string,
+    nombre: string,
+  ) => {
+    setEventosAEliminar((prev) => [
+      ...prev,
+      { dia, idTurno, idEvento, nombre },
+    ]);
     setDias(
       dias.map((d) =>
-        d.diaSemana === dia ? {
-          ...d,
-          turnos: d.turnos.map((t) =>
-            t.id === idTurno ? {
-              ...t,
-              eventos: t.eventos?.filter(e => e.id !== idEvento)
-            } : t
-          )
-        } : d
-      )
+        d.diaSemana === dia
+          ? {
+              ...d,
+              turnos: d.turnos.map((t) =>
+                t.id === idTurno
+                  ? {
+                      ...t,
+                      eventos: t.eventos?.filter((e) => e.id !== idEvento),
+                    }
+                  : t,
+              ),
+            }
+          : d,
+      ),
     );
   };
 
@@ -124,13 +206,15 @@ export default function ConfiguracionSemanal({
       return;
     }
 
-    const eventoMock = TIPOS_EVENTO_MOCK.find(e => e.id === tipoEventoSeleccionado);
+    const eventoMock = TIPOS_EVENTO_MOCK.find(
+      (e) => e.id === tipoEventoSeleccionado,
+    );
     if (!eventoMock) return;
 
     let diaIndex = -1;
     let turnoIndex = -1;
     for (let i = 0; i < dias.length; i++) {
-      const tIdx = dias[i].turnos.findIndex(t => t.id === turnoSeleccionado);
+      const tIdx = dias[i].turnos.findIndex((t) => t.id === turnoSeleccionado);
       if (tIdx !== -1) {
         diaIndex = i;
         turnoIndex = tIdx;
@@ -145,11 +229,16 @@ export default function ConfiguracionSemanal({
 
     // Validar superposición por duración
     const duracionTurno = aMinutos(turno.horaFin) - aMinutos(turno.horaInicio);
-    const duracionOcupada = (turno.eventos || []).reduce((acc, e) => acc + e.duracion, 0);
+    const duracionOcupada = (turno.eventos || []).reduce(
+      (acc, e) => acc + e.duracion,
+      0,
+    );
     const duracionNueva = eventoMock.duracion;
 
     if (duracionOcupada + duracionNueva > duracionTurno) {
-      setResultadoMensaje(`La duración excede el turno y se superpone con el siguiente.`);
+      setResultadoMensaje(
+        `La duración excede el turno y se superpone con el siguiente.`,
+      );
       setResultadoTipo('error');
       return;
     }
@@ -159,7 +248,7 @@ export default function ConfiguracionSemanal({
     turno.eventos.push({
       id: eventoMock.id,
       nombre: eventoMock.nombre,
-      duracion: eventoMock.duracion
+      duracion: eventoMock.duracion,
     });
 
     setDias(nuevosDias);
@@ -175,11 +264,13 @@ export default function ConfiguracionSemanal({
 
     // Encontrar días que se están deshabilitando y tienen reservas
     const conflictivos = dias.filter(
-      (d) => !d.habilitado && d.guardadoHabilitado && d.tieneReservas
+      (d) => !d.habilitado && d.guardadoHabilitado && d.tieneReservas,
     );
 
-    const eventosConflictivos = eventosAEliminar.filter(ev =>
-      obtenerReservasPorTipoEvento(ev.idTurno, ev.nombre, reservasMock).length > 0
+    const eventosConflictivos = eventosAEliminar.filter(
+      (ev) =>
+        obtenerReservasPorTipoEvento(ev.idTurno, ev.nombre, reservasMock)
+          .length > 0,
     );
 
     if (conflictivos.length > 0 || eventosConflictivos.length > 0) {
@@ -203,7 +294,11 @@ export default function ConfiguracionSemanal({
       setDiasGuardados(JSON.parse(JSON.stringify(dias)));
       setDias(dias.map((d) => ({ ...d, guardadoHabilitado: d.habilitado })));
       setEventosAEliminar([]);
-      setMensaje(cambiosRealizados || eventosAEliminar.length > 0 ? 'Cambios guardados exitosamente' : 'No hay cambios pendientes');
+      setMensaje(
+        cambiosRealizados || eventosAEliminar.length > 0
+          ? 'Cambios guardados exitosamente'
+          : 'No hay cambios pendientes',
+      );
     } catch {
       setMensaje('Error al guardar los cambios');
     }
@@ -226,9 +321,10 @@ export default function ConfiguracionSemanal({
       setEventosAEliminar([]);
 
       let msg = '';
-      if (diasConAdvertencia.length > 0) msg += `Reservas para el día ${diasConAdvertencia.join(', ')} canceladas. `;
+      if (diasConAdvertencia.length > 0)
+        msg += `Reservas para el día ${diasConAdvertencia.join(', ')} canceladas. `;
       if (eventosConAdvertencia.length > 0) {
-        eventosConAdvertencia.forEach(e => {
+        eventosConAdvertencia.forEach((e) => {
           msg += `Reservas del tipo de evento ${e.nombre} para el día ${e.dia} canceladas. `;
         });
       }
@@ -271,10 +367,17 @@ export default function ConfiguracionSemanal({
 
       {/* ── Asignar Evento a Turno (US04) integrado ── */}
       <div className="mt-8 p-6 bg-white border border-blue-200 rounded-xl shadow-sm text-slate-900">
-        <h4 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">Asignar Evento a Turno</h4>
+        <h4 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">
+          Asignar Evento a Turno
+        </h4>
         <form onSubmit={handleAsignarEvento} className="space-y-4 max-w-xl">
           <div className="flex flex-col space-y-1">
-            <label htmlFor="turnoSeleccionado" className="font-medium text-sm text-gray-700">Seleccionar turno existente:</label>
+            <label
+              htmlFor="turnoSeleccionado"
+              className="font-medium text-sm text-gray-700"
+            >
+              Seleccionar turno existente:
+            </label>
             <select
               id="turnoSeleccionado"
               data-cy="select-siguiente-turno"
@@ -283,18 +386,25 @@ export default function ConfiguracionSemanal({
               className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">Seleccione un turno...</option>
-              {dias.filter(d => d.habilitado).map(d => (
-                d.turnos.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {d.diaSemana}: {t.horaInicio} - {t.horaFin}
-                  </option>
-                ))
-              ))}
+              {dias
+                .filter((d) => d.habilitado)
+                .map((d) =>
+                  d.turnos.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {d.diaSemana}: {t.horaInicio} - {t.horaFin}
+                    </option>
+                  )),
+                )}
             </select>
           </div>
 
           <div className="flex flex-col space-y-1">
-            <label htmlFor="tipoEvento" className="font-medium text-sm text-gray-700">Tipo de Evento:</label>
+            <label
+              htmlFor="tipoEvento"
+              className="font-medium text-sm text-gray-700"
+            >
+              Tipo de Evento:
+            </label>
             <select
               id="tipoEvento"
               data-cy="select-tipo-evento"
@@ -314,10 +424,11 @@ export default function ConfiguracionSemanal({
           {resultadoMensaje && (
             <div
               data-cy="mensaje-resultado"
-              className={`p-2 rounded text-sm border ${resultadoTipo === 'success'
+              className={`p-2 rounded text-sm border ${
+                resultadoTipo === 'success'
                   ? 'text-green-700 bg-green-50 border-green-200'
                   : 'text-red-700 bg-red-50 border-red-200'
-                }`}
+              }`}
             >
               {resultadoMensaje}
             </div>
@@ -336,7 +447,8 @@ export default function ConfiguracionSemanal({
       {/* Global Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mt-8 p-6 bg-slate-900 border border-slate-800 rounded-xl">
         <div className="text-sm text-slate-400 text-center sm:text-left">
-          Modifica los días de la semana y guarda para aplicar los cambios a la agenda.
+          Modifica los días de la semana y guarda para aplicar los cambios a la
+          agenda.
         </div>
         <div className="flex gap-4 w-full sm:w-auto justify-center">
           <button
@@ -379,7 +491,11 @@ export default function ConfiguracionSemanal({
         >
           {diasConAdvertencia.length > 0 && (
             <p className="text-sm font-medium mb-2">
-              Los siguientes días tienen reservas registradas: <strong className="text-red-400">{diasConAdvertencia.join(', ')}</strong>.
+              Los siguientes días tienen reservas registradas:{' '}
+              <strong className="text-red-400">
+                {diasConAdvertencia.join(', ')}
+              </strong>
+              .
             </p>
           )}
           {eventosConAdvertencia.length > 0 && (

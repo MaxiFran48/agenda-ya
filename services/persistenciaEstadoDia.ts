@@ -5,7 +5,7 @@ export const guardarBloqueos = async (): Promise<boolean> => {
 export const guardarEstadoDia = async (
   dia: string,
   habilitado: boolean,
-  cancelarReservas: boolean
+  cancelarReservas: boolean,
 ): Promise<boolean> => {
   return true;
 };

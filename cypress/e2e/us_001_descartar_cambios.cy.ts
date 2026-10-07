@@ -1,18 +1,19 @@
 /// <reference types="cypress" />
 
 describe('US_001 - CP-001-02: Descartar cambios en configuración semanal de días de trabajo', () => {
-
   beforeEach(() => {
     // Arrange: visitar la aplicación en estado inicial
     cy.visit('http://localhost:3000');
   });
 
   it('Debería revertir el estado del día Miércoles al descartar desde la advertencia de reservas (Escenario 4)', () => {
-
     // ── ARRANGE ──────────────────────────────────────────────────────────────
     // Pre-condición: Miércoles inicia HABILITADO (bg-white, checkbox marcado)
     // y tiene reservas registradas (tieneReservas: true en DIAS_INICIALES).
-    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should('have.class', 'bg-white');
+    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should(
+      'have.class',
+      'bg-white',
+    );
     cy.get('[data-cy="dia-checkbox-mi\u00e9rcoles"]').should('be.checked');
 
     // ── ACT ──────────────────────────────────────────────────────────────────
@@ -21,7 +22,10 @@ describe('US_001 - CP-001-02: Descartar cambios en configuración semanal de dí
 
     // Verificación intermedia: el cambio se refleja visualmente
     cy.get('[data-cy="dia-checkbox-mi\u00e9rcoles"]').should('not.be.checked');
-    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should('have.class', 'bg-gray-200');
+    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should(
+      'have.class',
+      'bg-gray-200',
+    );
 
     // 2. El usuario presiona "Guardar Cambios" — el sistema detecta reservas activas
     cy.get('[data-cy="btn-guardar-global"]').click();
@@ -38,7 +42,10 @@ describe('US_001 - CP-001-02: Descartar cambios en configuración semanal de dí
 
     // 5. El sistema revierte Miércoles a su estado guardado (habilitado)
     cy.get('[data-cy="dia-checkbox-mi\u00e9rcoles"]').should('be.checked');
-    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should('have.class', 'bg-white');
+    cy.get('[data-cy="dia-contenedor-mi\u00e9rcoles"]').should(
+      'have.class',
+      'bg-white',
+    );
 
     // 6. Aparece el mensaje de confirmación de descarte
     cy.get('[data-cy="mensaje-alerta-global"]')

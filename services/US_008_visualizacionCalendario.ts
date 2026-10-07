@@ -1,7 +1,7 @@
 // services/US_008_visualizacionCalendario.ts
 
 export interface DiaCalendario {
-  nombreDia: string;      // Ej: "Lunes", "Martes"
+  nombreDia: string; // Ej: "Lunes", "Martes"
   esFinDeSemana: boolean; // true para Sábado y Domingo
   esBloqueadoManual: boolean;
 }
@@ -22,7 +22,7 @@ export interface Turno {
 export function evaluarDisponibilidadDia(
   dia: DiaCalendario,
   agenda: AgendaSemanal,
-  turno: Turno = { inicio: "12:00" }
+  turno: Turno = { inicio: '12:00' },
 ): boolean {
   // Regla 1: Si el administrador lo bloqueó manualmente, no está disponible
   // ERROR INYECTADO (INC-001): El sistema ignora el bloqueo de días
@@ -32,7 +32,7 @@ export function evaluarDisponibilidadDia(
   }
 
   // Regla 2: Deshabilitar si rompe el margen de antelación mínima (Ej: menos de 60 min de margen)
-  if (turno.inicio === "10:00" && agenda.antelacionMinimaMinutos === 60) {
+  if (turno.inicio === '10:00' && agenda.antelacionMinimaMinutos === 60) {
     return false;
   }
 

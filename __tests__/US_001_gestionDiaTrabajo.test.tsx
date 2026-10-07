@@ -34,7 +34,7 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
       expect(guardarEstadoDia).toHaveBeenCalledWith('Sábado', true, false);
       expect(contenedorSabado).toHaveClass('bg-white');
       expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
-        'Cambios guardados exitosamente'
+        'Cambios guardados exitosamente',
       );
     });
   });
@@ -62,7 +62,7 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
       expect(guardarEstadoDia).toHaveBeenCalledWith('Jueves', false, false);
       expect(contenedorJueves).toHaveClass('bg-gray-200');
       expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
-        'Cambios guardados exitosamente'
+        'Cambios guardados exitosamente',
       );
     });
   });
@@ -89,7 +89,9 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
     expect(guardarEstadoDia).not.toHaveBeenCalled();
 
     // Confirmamos cancelar turnos
-    const btnConfirmarCancelar = screen.getByTestId('btn-confirmar-cancelar-global');
+    const btnConfirmarCancelar = screen.getByTestId(
+      'btn-confirmar-cancelar-global',
+    );
     fireEvent.click(btnConfirmarCancelar);
 
     // Verificaciones
@@ -97,7 +99,7 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
       expect(guardarEstadoDia).toHaveBeenCalledWith('Lunes', false, true);
       expect(contenedorLunes).toHaveClass('bg-gray-200');
       expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
-        'Reservas para el día Lunes canceladas'
+        'Reservas para el día Lunes canceladas',
       );
     });
   });
@@ -121,14 +123,16 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
     expect(advertenciaGlobal).toBeInTheDocument();
 
     // Descartamos cambios
-    const btnConfirmarDescartar = screen.getByTestId('btn-confirmar-descartar-global');
+    const btnConfirmarDescartar = screen.getByTestId(
+      'btn-confirmar-descartar-global',
+    );
     fireEvent.click(btnConfirmarDescartar);
 
     // Verificaciones: debe volver al estado activo inicial
     expect(contenedorMiercoles).toHaveClass('bg-white');
     expect(checkboxMiercoles).toBeChecked();
     expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
-      'Cambios descartados'
+      'Cambios descartados',
     );
     expect(guardarEstadoDia).not.toHaveBeenCalled();
   });
@@ -160,7 +164,7 @@ describe('US_001: Deshabilitar/habilitar días de trabajo (Global)', () => {
     // No se dispara la API porque no hay diferencias contra el estado guardado.
     await waitFor(() => {
       expect(screen.getByTestId('mensaje-alerta-global')).toHaveTextContent(
-        'No hay cambios pendientes'
+        'No hay cambios pendientes',
       );
     });
     expect(guardarEstadoDia).not.toHaveBeenCalled();

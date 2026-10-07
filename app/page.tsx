@@ -6,37 +6,73 @@ import {
   descartarSeleccion,
 } from '../services/disponibilidad';
 import { procesarConfirmacionBloqueo } from '../services/logicaBloqueo';
-import GestionSemana, { DayConfig } from '../components/US_001_configuracionSemanal';
+import GestionSemana, {
+  DayConfig,
+} from '../components/US_001_configuracionSemanal';
 import VisualizacionCalendarioPublico from '../components/US_008_visualizacionCalendario';
-
 
 // Datos del entorno de test del CP-001-01
 const DIAS_INICIALES: DayConfig[] = [
-  { diaSemana: 'Lunes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Martes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
   {
-    diaSemana: 'Miércoles', habilitado: true, guardadoHabilitado: true, tieneReservas: true, turnos: [
+    diaSemana: 'Lunes',
+    habilitado: false,
+    guardadoHabilitado: false,
+    tieneReservas: false,
+    turnos: [],
+  },
+  {
+    diaSemana: 'Martes',
+    habilitado: false,
+    guardadoHabilitado: false,
+    tieneReservas: false,
+    turnos: [],
+  },
+  {
+    diaSemana: 'Miércoles',
+    habilitado: true,
+    guardadoHabilitado: true,
+    tieneReservas: true,
+    turnos: [
       {
         id: 't-mock-1',
         horaInicio: '09:00',
         horaFin: '11:00',
-        eventos: [
-          { id: '3', nombre: 'Consulta Larga', duracion: 60 }
-        ]
-      }
-    ]
+        eventos: [{ id: '3', nombre: 'Consulta Larga', duracion: 60 }],
+      },
+    ],
   },
-  { diaSemana: 'Jueves', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Viernes', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Sábado', habilitado: true, guardadoHabilitado: true, tieneReservas: false, turnos: [] },
-  { diaSemana: 'Domingo', habilitado: false, guardadoHabilitado: false, tieneReservas: false, turnos: [] },
+  {
+    diaSemana: 'Jueves',
+    habilitado: false,
+    guardadoHabilitado: false,
+    tieneReservas: false,
+    turnos: [],
+  },
+  {
+    diaSemana: 'Viernes',
+    habilitado: false,
+    guardadoHabilitado: false,
+    tieneReservas: false,
+    turnos: [],
+  },
+  {
+    diaSemana: 'Sábado',
+    habilitado: true,
+    guardadoHabilitado: true,
+    tieneReservas: false,
+    turnos: [],
+  },
+  {
+    diaSemana: 'Domingo',
+    habilitado: false,
+    guardadoHabilitado: false,
+    tieneReservas: false,
+    turnos: [],
+  },
 ];
 
 // ─── Datos de ejemplo ────────────────────────────────────────────────────────
-const DIAS_CON_RESERVAS: string[] = [
-  getFechaRelativa(5),
-  getFechaRelativa(8),
-];
+const DIAS_CON_RESERVAS: string[] = [getFechaRelativa(5), getFechaRelativa(8)];
 
 interface TurnoMock {
   id: number;
@@ -62,8 +98,18 @@ function getFechaHoy(): string {
 }
 
 const NOMBRES_MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 const NOMBRES_DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -84,16 +130,13 @@ export default function GestionDisponibilidad() {
   // --- Estados: Modal CP-006 ---
   const [mostrarModalAdvertencia, setMostrarModalAdvertencia] = useState(false);
   const [turnosAfectados, setTurnosAfectados] = useState<TurnoMock[]>([]);
-  const [estadoMockTurnos, setEstadoMockTurnos] = useState<TurnoMock[]>(TURNOS_MOCK);
-
-
+  const [estadoMockTurnos, setEstadoMockTurnos] =
+    useState<TurnoMock[]>(TURNOS_MOCK);
 
   const ahora = new Date();
   const [mesVista, setMesVista] = useState(
-    new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    new Date(ahora.getFullYear(), ahora.getMonth(), 1),
   );
-
-
 
   // --- Manejadores: Horario ---
   const handleGuardarHorario = (e: React.FormEvent) => {
@@ -115,17 +158,21 @@ export default function GestionDisponibilidad() {
     setErrorBloqueo('');
     setMensajeConfirmacion('');
     const tieneReservas = DIAS_CON_RESERVAS.includes(fechaStr);
-    const resultado = esFechaValidaParaBloqueo(fechaStr, tieneReservas, getFechaHoy());
+    const resultado = esFechaValidaParaBloqueo(
+      fechaStr,
+      tieneReservas,
+      getFechaHoy(),
+    );
 
     if (resultado.estado === 'ERROR') {
       setErrorBloqueo('No se pueden bloquear fechas pasadas ni el día de hoy.');
       return;
     }
 
-    // Con CP-006 el reagendamiento/cancelación se maneja al guardar, 
+    // Con CP-006 el reagendamiento/cancelación se maneja al guardar,
     // por lo que permitimos siempre seleccionar el día temporalmente.
     setDiasSeleccionados((prev) =>
-      prev.includes(fechaStr) ? prev : [...prev, fechaStr]
+      prev.includes(fechaStr) ? prev : [...prev, fechaStr],
     );
   };
 
@@ -134,29 +181,41 @@ export default function GestionDisponibilidad() {
     if (diasSeleccionados.length === 0) return;
 
     // Verificar si algún día seleccionado tiene reservas
-    const diasConReservasEnSeleccion = diasSeleccionados.filter(dia => DIAS_CON_RESERVAS.includes(dia));
+    const diasConReservasEnSeleccion = diasSeleccionados.filter((dia) =>
+      DIAS_CON_RESERVAS.includes(dia),
+    );
 
     if (diasConReservasEnSeleccion.length > 0) {
       // Mostrar modal
-      const turnosInvolucrados = estadoMockTurnos.filter(t => diasConReservasEnSeleccion.includes(t.fecha));
+      const turnosInvolucrados = estadoMockTurnos.filter((t) =>
+        diasConReservasEnSeleccion.includes(t.fecha),
+      );
       setTurnosAfectados(turnosInvolucrados);
       setMostrarModalAdvertencia(true);
       return;
     }
 
     // Flujo normal sin reservas
-    const resultado = procesarConfirmacionBloqueo(diasSeleccionados[0], false, 'NINGUNA');
+    const resultado = procesarConfirmacionBloqueo(
+      diasSeleccionados[0],
+      false,
+      'NINGUNA',
+    );
     setDiasBloqueados((prev) => [...prev, ...diasSeleccionados]);
     setDiasSeleccionados([]);
     setMensajeConfirmacion(resultado.mensaje);
   };
 
   const handleConfirmarBloqueoModal = () => {
-    const resultado = procesarConfirmacionBloqueo(diasSeleccionados[0], true, 'CONFIRMAR');
+    const resultado = procesarConfirmacionBloqueo(
+      diasSeleccionados[0],
+      true,
+      'CONFIRMAR',
+    );
 
     // Actualizar estado de turnos mockeados a Cancelado
-    const nuevosTurnos = estadoMockTurnos.map(t => {
-      if (turnosAfectados.find(ta => ta.id === t.id)) {
+    const nuevosTurnos = estadoMockTurnos.map((t) => {
+      if (turnosAfectados.find((ta) => ta.id === t.id)) {
         return { ...t, estado: 'Cancelado' };
       }
       return t;
@@ -164,9 +223,11 @@ export default function GestionDisponibilidad() {
     setEstadoMockTurnos(nuevosTurnos);
 
     // Mostrar visualmente en el modal que se cancelaron antes de cerrar
-    setTurnosAfectados(nuevosTurnos.filter(t => diasSeleccionados.includes(t.fecha)));
+    setTurnosAfectados(
+      nuevosTurnos.filter((t) => diasSeleccionados.includes(t.fecha)),
+    );
 
-    // Simulamos un pequeño delay para que el usuario vea el cambio a "Cancelado" 
+    // Simulamos un pequeño delay para que el usuario vea el cambio a "Cancelado"
     // antes de cerrar el modal y confirmar
     setTimeout(() => {
       setDiasBloqueados((prev) => [...prev, ...diasSeleccionados]);
@@ -190,7 +251,6 @@ export default function GestionDisponibilidad() {
     setErrorBloqueo('');
   };
 
-
   // --- Lógica del calendario ---
   const anio = mesVista.getFullYear();
   const mes = mesVista.getMonth();
@@ -204,7 +264,6 @@ export default function GestionDisponibilidad() {
   const toStr = (d: number) =>
     `${anio}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-
   return (
     <div className="min-h-screen p-8 bg-gray-50 text-gray-900 font-sans">
       <div className="max-w-4xl mx-auto space-y-12">
@@ -214,41 +273,95 @@ export default function GestionDisponibilidad() {
 
         {/* ── SECCIÓN 1: CONFIGURAR HORARIO LABORAL ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">1. Configurar horario laboral</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
+            1. Configurar horario laboral
+          </h2>
           <form onSubmit={handleGuardarHorario} className="space-y-4">
             <div className="flex flex-col space-y-1">
-              <label htmlFor="diaSemana" className="font-medium text-sm text-gray-700">Día de la semana:</label>
-              <select id="diaSemana" data-cy="select-dia" value={dia}
+              <label
+                htmlFor="diaSemana"
+                className="font-medium text-sm text-gray-700"
+              >
+                Día de la semana:
+              </label>
+              <select
+                id="diaSemana"
+                data-cy="select-dia"
+                value={dia}
                 onChange={(e) => setDia(e.target.value)}
-                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
                 <option value="">Seleccione un día...</option>
-                {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((d) => (
-                  <option key={d} value={d}>{d}</option>
+                {[
+                  'Lunes',
+                  'Martes',
+                  'Miércoles',
+                  'Jueves',
+                  'Viernes',
+                  'Sábado',
+                  'Domingo',
+                ].map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="horaInicio" className="font-medium text-sm text-gray-700">Hora de inicio:</label>
-                <input type="time" id="horaInicio" data-cy="input-hora-inicio" value={horaInicio}
+                <label
+                  htmlFor="horaInicio"
+                  className="font-medium text-sm text-gray-700"
+                >
+                  Hora de inicio:
+                </label>
+                <input
+                  type="time"
+                  id="horaInicio"
+                  data-cy="input-hora-inicio"
+                  value={horaInicio}
                   onChange={(e) => setHoraInicio(e.target.value)}
-                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="horaFin" className="font-medium text-sm text-gray-700">Hora de fin:</label>
-                <input type="time" id="horaFin" data-cy="input-hora-fin" value={horaFin}
+                <label
+                  htmlFor="horaFin"
+                  className="font-medium text-sm text-gray-700"
+                >
+                  Hora de fin:
+                </label>
+                <input
+                  type="time"
+                  id="horaFin"
+                  data-cy="input-hora-fin"
+                  value={horaFin}
                   onChange={(e) => setHoraFin(e.target.value)}
-                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
               </div>
             </div>
             {errorHorario && (
-              <div data-cy="mensaje-error-horario" className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm">{errorHorario}</div>
+              <div
+                data-cy="mensaje-error-horario"
+                className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm"
+              >
+                {errorHorario}
+              </div>
             )}
             {exitoHorario && (
-              <div data-cy="mensaje-exito-horario" className="text-green-600 bg-green-50 border border-green-200 p-2 rounded text-sm">{exitoHorario}</div>
+              <div
+                data-cy="mensaje-exito-horario"
+                className="text-green-600 bg-green-50 border border-green-200 p-2 rounded text-sm"
+              >
+                {exitoHorario}
+              </div>
             )}
-            <button type="submit" data-cy="btn-guardar-horario"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors">
+            <button
+              type="submit"
+              data-cy="btn-guardar-horario"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+            >
               Guardar Horario
             </button>
           </form>
@@ -256,22 +369,26 @@ export default function GestionDisponibilidad() {
 
         {/* ── SECCIÓN 2: CONFIGURACIÓN SEMANAL DE DÍAS DE TRABAJO (US_001) ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Configuración semanal de días de trabajo</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
+            2. Configuración semanal de días de trabajo
+          </h2>
           <GestionSemana diasIniciales={DIAS_INICIALES} />
         </section>
 
         {/* ── SECCIÓN 3: BLOQUEAR UN DÍA ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-5 border-b pb-2">3. Bloquear un día</h2>
+          <h2 className="text-xl font-semibold mb-5 border-b pb-2">
+            3. Bloquear un día
+          </h2>
 
           {/* ── MINI CALENDARIO ── */}
           <div className="mb-4 select-none">
-
             {/* Navegación mes */}
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => setMesVista(new Date(anio, mes - 1, 1))}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl">
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl"
+              >
                 ‹
               </button>
               <span className="font-semibold text-gray-700 text-sm tracking-wide">
@@ -279,7 +396,8 @@ export default function GestionDisponibilidad() {
               </span>
               <button
                 onClick={() => setMesVista(new Date(anio, mes + 1, 1))}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl">
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 text-xl"
+              >
                 ›
               </button>
             </div>
@@ -287,7 +405,12 @@ export default function GestionDisponibilidad() {
             {/* Encabezado días semana */}
             <div className="grid grid-cols-7 mb-1">
               {NOMBRES_DIAS.map((d) => (
-                <div key={d} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
+                <div
+                  key={d}
+                  className="text-center text-xs font-medium text-gray-400 py-1"
+                >
+                  {d}
+                </div>
               ))}
             </div>
 
@@ -306,27 +429,38 @@ export default function GestionDisponibilidad() {
                 const estaBloqueado = diasBloqueados.includes(fechaStr);
                 const estaSeleccionado = diasSeleccionados.includes(fechaStr);
 
-                let cls = 'relative flex flex-col items-center justify-center h-9 rounded-lg text-sm transition-colors ';
+                let cls =
+                  'relative flex flex-col items-center justify-center h-9 rounded-lg text-sm transition-colors ';
                 if (estaBloqueado) {
                   cls += 'bg-red-50 text-red-300 cursor-not-allowed';
                 } else if (estaSeleccionado) {
                   cls += 'bg-blue-500 text-white cursor-pointer shadow-sm';
                 } else if (esHoy) {
-                  cls += 'border-2 border-blue-400 text-blue-600 font-semibold cursor-not-allowed';
+                  cls +=
+                    'border-2 border-blue-400 text-blue-600 font-semibold cursor-not-allowed';
                 } else if (esPasadoOHoy) {
                   cls += 'text-gray-300 cursor-not-allowed';
                 } else {
-                  cls += 'hover:bg-orange-50 hover:text-orange-600 text-gray-700 cursor-pointer font-medium';
+                  cls +=
+                    'hover:bg-orange-50 hover:text-orange-600 text-gray-700 cursor-pointer font-medium';
                 }
 
                 return (
                   <button
                     key={i}
-                    data-cy={!esPasadoOHoy && !estaBloqueado ? `dia-${fechaStr}` : `dia-pasado-${diaNum}`}
+                    data-cy={
+                      !esPasadoOHoy && !estaBloqueado
+                        ? `dia-${fechaStr}`
+                        : `dia-pasado-${diaNum}`
+                    }
                     disabled={esPasadoOHoy || estaBloqueado}
                     onClick={() => handleClickDia(fechaStr)}
                     className={cls}
-                    title={tieneReserva ? 'Tiene turnos — requiere reagendamiento' : undefined}
+                    title={
+                      tieneReserva
+                        ? 'Tiene turnos — requiere reagendamiento'
+                        : undefined
+                    }
                   >
                     <span className="leading-none">{diaNum}</span>
 
@@ -362,8 +496,10 @@ export default function GestionDisponibilidad() {
 
           {/* Error */}
           {errorBloqueo && (
-            <div data-cy="mensaje-error-bloqueo"
-              className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm mb-3">
+            <div
+              data-cy="mensaje-error-bloqueo"
+              className="text-red-600 bg-red-50 border border-red-200 p-2 rounded text-sm mb-3"
+            >
               {errorBloqueo}
             </div>
           )}
@@ -371,17 +507,27 @@ export default function GestionDisponibilidad() {
           {/* Selección temporal */}
           {diasSeleccionados.length > 0 && (
             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-              <p className="font-medium text-blue-800 mb-2">Días seleccionados (sin guardar):</p>
+              <p className="font-medium text-blue-800 mb-2">
+                Días seleccionados (sin guardar):
+              </p>
               <ul className="list-disc list-inside text-blue-700 mb-3">
-                {diasSeleccionados.map((f) => <li key={f}>{f}</li>)}
+                {diasSeleccionados.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
               </ul>
               <div className="flex gap-3">
-                <button onClick={handleGuardar} data-cy="btn-guardar"
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors">
+                <button
+                  onClick={handleGuardar}
+                  data-cy="btn-guardar"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                >
                   Guardar
                 </button>
-                <button onClick={handleDescartar} data-cy="btn-descartar"
-                  className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded transition-colors">
+                <button
+                  onClick={handleDescartar}
+                  data-cy="btn-descartar"
+                  className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded transition-colors"
+                >
                   Descartar cambios
                 </button>
               </div>
@@ -390,8 +536,10 @@ export default function GestionDisponibilidad() {
 
           {/* Confirmación */}
           {mensajeConfirmacion && (
-            <div data-cy="mensaje-confirmacion"
-              className="mt-3 text-green-600 bg-green-50 border border-green-200 p-3 rounded text-sm">
+            <div
+              data-cy="mensaje-confirmacion"
+              className="mt-3 text-green-600 bg-green-50 border border-green-200 p-3 rounded text-sm"
+            >
               {mensajeConfirmacion}
             </div>
           )}
@@ -400,21 +548,35 @@ export default function GestionDisponibilidad() {
         {/* ── MODAL ADVERTENCIA CP-006 ── */}
         {mostrarModalAdvertencia && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div data-cy="modal-advertencia" className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-              <h3 className="text-xl font-bold text-red-600 mb-4">Advertencia</h3>
+            <div
+              data-cy="modal-advertencia"
+              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+            >
+              <h3 className="text-xl font-bold text-red-600 mb-4">
+                Advertencia
+              </h3>
               <p className="mb-4 text-gray-700">
-                Está intentando bloquear días que ya contienen reservas.
-                Si continúa, los siguientes turnos serán cancelados.
+                Está intentando bloquear días que ya contienen reservas. Si
+                continúa, los siguientes turnos serán cancelados.
               </p>
 
               <div className="bg-gray-50 p-3 rounded mb-5 max-h-48 overflow-y-auto">
-                <h4 className="font-semibold text-sm mb-2 text-gray-600">Turnos afectados:</h4>
+                <h4 className="font-semibold text-sm mb-2 text-gray-600">
+                  Turnos afectados:
+                </h4>
                 <ul className="space-y-2">
-                  {turnosAfectados.map(t => (
-                    <li key={t.id} className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0">
-                      <span>{t.fecha} - {t.horario}</span>
-                      <span data-cy={`estado-turno-${t.id}`}
-                        className={`font-medium px-2 py-0.5 rounded text-xs ${t.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  {turnosAfectados.map((t) => (
+                    <li
+                      key={t.id}
+                      className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0"
+                    >
+                      <span>
+                        {t.fecha} - {t.horario}
+                      </span>
+                      <span
+                        data-cy={`estado-turno-${t.id}`}
+                        className={`font-medium px-2 py-0.5 rounded text-xs ${t.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                      >
                         {t.estado}
                       </span>
                     </li>
@@ -427,14 +589,16 @@ export default function GestionDisponibilidad() {
                   type="button"
                   onClick={handleAbortarBloqueoModal}
                   data-cy="btn-abortar-bloqueo"
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors">
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors"
+                >
                   Cancelar/Descartar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmarBloqueoModal}
                   data-cy="btn-confirmar-bloqueo"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors">
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors"
+                >
                   Confirmar
                 </button>
               </div>
@@ -442,10 +606,11 @@ export default function GestionDisponibilidad() {
           </div>
         )}
 
-
         {/* ── SECCIÓN 6: VISUALIZACIÓN DE CALENDARIO (US_008) ── */}
         <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">6. Visualización de calendario (US_008)</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
+            6. Visualización de calendario (US_008)
+          </h2>
           <VisualizacionCalendarioPublico />
         </section>
       </div>

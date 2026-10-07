@@ -35,14 +35,21 @@ export default function GestionDiaTrabajo({
   turnos?: Turno[];
   onAgregarTurno?: (dia: string, horaInicio: string, horaFin: string) => void;
   onEliminarTurno?: (dia: string, id: string) => void;
-  onEliminarEvento?: (dia: string, idTurno: string, idEvento: string, nombreEvento: string) => void;
+  onEliminarEvento?: (
+    dia: string,
+    idTurno: string,
+    idEvento: string,
+    nombreEvento: string,
+  ) => void;
 }) {
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
   const [error, setError] = useState('');
 
   const normalizado = diaSemana.toLowerCase();
-  const diaClase = habilitado ? 'bg-white text-slate-900 border-blue-500' : 'bg-gray-200 text-slate-700';
+  const diaClase = habilitado
+    ? 'bg-white text-slate-900 border-blue-500'
+    : 'bg-gray-200 text-slate-700';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,10 +66,14 @@ export default function GestionDiaTrabajo({
     }
 
     const haySuperposicion = turnos.some(
-      (t) => aMinutos(horaInicio) < aMinutos(t.horaFin) && aMinutos(horaFin) > aMinutos(t.horaInicio)
+      (t) =>
+        aMinutos(horaInicio) < aMinutos(t.horaFin) &&
+        aMinutos(horaFin) > aMinutos(t.horaInicio),
     );
     if (haySuperposicion) {
-      setError(`Superposición entre turnos ${horaInicio} y ${horaFin} del día ${diaSemana}`);
+      setError(
+        `Superposición entre turnos ${horaInicio} y ${horaFin} del día ${diaSemana}`,
+      );
       return;
     }
 
@@ -94,9 +105,13 @@ export default function GestionDiaTrabajo({
 
       {/* Lista de turnos del día */}
       <div className="mb-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-500">Turnos configurados</h4>
+        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-500">
+          Turnos configurados
+        </h4>
         {turnos.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">Sin turnos configurados.</p>
+          <p className="text-sm text-slate-400 italic">
+            Sin turnos configurados.
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {turnos.map((t) => (
@@ -105,7 +120,9 @@ export default function GestionDiaTrabajo({
                 data-testid={`turno-item-${normalizado}`}
                 data-cy={`turno-item-${normalizado}`}
                 className={`p-3 rounded text-sm font-medium flex flex-col gap-2 ${
-                  habilitado ? 'bg-blue-50 text-blue-900' : 'bg-gray-100 text-slate-500'
+                  habilitado
+                    ? 'bg-blue-50 text-blue-900'
+                    : 'bg-gray-100 text-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -129,18 +146,23 @@ export default function GestionDiaTrabajo({
                 {t.eventos && t.eventos.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {t.eventos.map((e) => (
-                      <span key={e.id} className="flex items-center gap-1 text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                      <span
+                        key={e.id}
+                        className="flex items-center gap-1 text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold"
+                      >
                         {e.nombre} ({e.duracion}m)
                         {onEliminarEvento && (
-                           <button
-                             type="button"
-                             data-cy={`btn-eliminar-evento-${e.id}`}
-                             onClick={() => onEliminarEvento(diaSemana, t.id, e.id, e.nombre)}
-                             className="text-blue-900 hover:text-red-600 transition font-bold"
-                             aria-label={`Quitar ${e.nombre}`}
-                           >
-                             ✕
-                           </button>
+                          <button
+                            type="button"
+                            data-cy={`btn-eliminar-evento-${e.id}`}
+                            onClick={() =>
+                              onEliminarEvento(diaSemana, t.id, e.id, e.nombre)
+                            }
+                            className="text-blue-900 hover:text-red-600 transition font-bold"
+                            aria-label={`Quitar ${e.nombre}`}
+                          >
+                            ✕
+                          </button>
                         )}
                       </span>
                     ))}

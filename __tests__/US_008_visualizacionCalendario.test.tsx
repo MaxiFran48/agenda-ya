@@ -1,5 +1,9 @@
 // __tests__/US_008_visualizacionCalendario.test.tsx
-import { evaluarDisponibilidadDia, DiaCalendario, AgendaSemanal } from '../services/US_008_visualizacionCalendario';
+import {
+  evaluarDisponibilidadDia,
+  DiaCalendario,
+  AgendaSemanal,
+} from '../services/US_008_visualizacionCalendario';
 
 describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-01: Debe habilitar días hábiles según la agenda y deshabilitar fines de semana', () => {
   const agendaSemanal = (): AgendaSemanal => ({
@@ -56,7 +60,11 @@ describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-03: Debe inva
     };
     const turnoCritico = { inicio: '10:00' };
 
-    const resultado = evaluarDisponibilidadDia(diaActual, agendaSemanal(), turnoCritico);
+    const resultado = evaluarDisponibilidadDia(
+      diaActual,
+      agendaSemanal(),
+      turnoCritico,
+    );
     expect(resultado).toBe(false);
   });
 });

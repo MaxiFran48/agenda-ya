@@ -1,13 +1,13 @@
 export interface Turno {
-    id?: number;
-    horaInicio: string;
+  id?: number;
+  horaInicio: string;
 }
 
 export interface Reserva {
-    id?: number;
-    idTurno: string | number;
-    tipoEvento: string;
-    estado: string;
+  id?: number;
+  idTurno: string | number;
+  tipoEvento: string;
+  estado: string;
 }
 
 /**
@@ -16,22 +16,32 @@ export interface Reserva {
  * - US_004 - ESCENARIO 1: Retorna false si no hay conflicto, permitiendo el guardado directo.
  * - US_004 - ESCENARIO 2: Detecta matemáticamente la colisión horaria basada en la duración máxima.
  */
-export function verificarSuperposicionEvento(turnoActual: Turno, duracionNuevoEventoMinutos: number, proximoTurno: Turno | null): boolean {
-    if (!turnoActual || !duracionNuevoEventoMinutos || !proximoTurno) return false;
+export function verificarSuperposicionEvento(
+  turnoActual: Turno,
+  duracionNuevoEventoMinutos: number,
+  proximoTurno: Turno | null,
+): boolean {
+  if (!turnoActual || !duracionNuevoEventoMinutos || !proximoTurno)
+    return false;
 
-    // Convertir hora de inicio del turno actual a minutos totales desde las 00:00
-    const [horasActual, minutosActual] = turnoActual.horaInicio.split(':').map(Number);
-    const tiempoInicioActualMin = (horasActual * 60) + minutosActual;
-    
-    // Calcular el final teórico del turno sumando la duración máxima del nuevo evento
-    const tiempoFinTeoricoMin = tiempoInicioActualMin + duracionNuevoEventoMinutos;
+  // Convertir hora de inicio del turno actual a minutos totales desde las 00:00
+  const [horasActual, minutosActual] = turnoActual.horaInicio
+    .split(':')
+    .map(Number);
+  const tiempoInicioActualMin = horasActual * 60 + minutosActual;
 
-    // Convertir hora de inicio del próximo turno a minutos totales
-    const [horasProximo, minutosProximo] = proximoTurno.horaInicio.split(':').map(Number);
-    const tiempoInicioProximoMin = (horasProximo * 60) + minutosProximo;
+  // Calcular el final teórico del turno sumando la duración máxima del nuevo evento
+  const tiempoFinTeoricoMin =
+    tiempoInicioActualMin + duracionNuevoEventoMinutos;
 
-    // Si el final teórico invade el inicio del próximo turno, existe superposición
-    return tiempoFinTeoricoMin > tiempoInicioProximoMin;
+  // Convertir hora de inicio del próximo turno a minutos totales
+  const [horasProximo, minutosProximo] = proximoTurno.horaInicio
+    .split(':')
+    .map(Number);
+  const tiempoInicioProximoMin = horasProximo * 60 + minutosProximo;
+
+  // Si el final teórico invade el inicio del próximo turno, existe superposición
+  return tiempoFinTeoricoMin > tiempoInicioProximoMin;
 }
 
 /**
@@ -41,13 +51,18 @@ export function verificarSuperposicionEvento(turnoActual: Turno, duracionNuevoEv
  * - US_004 - ESCENARIO 4: Verifica si existen reservas antes de disparar la advertencia.
  * - US_004 - ESCENARIO 5: Comprueba que el resultado sea un arreglo vacío para proceder sin alertas.
  */
-export function obtenerReservasPorTipoEvento(idTurno: string | number, tipoEvento: string, reservasActivas: Reserva[]): Reserva[] {
-    if (!idTurno || !tipoEvento || !Array.isArray(reservasActivas)) return [];
-    return reservasActivas.filter(
-        reserva => String(reserva.idTurno) === String(idTurno) && 
-                   reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase() && 
-                   reserva.estado === 'Activa'
-    );
+export function obtenerReservasPorTipoEvento(
+  idTurno: string | number,
+  tipoEvento: string,
+  reservasActivas: Reserva[],
+): Reserva[] {
+  if (!idTurno || !tipoEvento || !Array.isArray(reservasActivas)) return [];
+  return reservasActivas.filter(
+    (reserva) =>
+      String(reserva.idTurno) === String(idTurno) &&
+      reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase() &&
+      reserva.estado === 'Activa',
+  );
 }
 
 /**
@@ -55,12 +70,19 @@ export function obtenerReservasPorTipoEvento(idTurno: string | number, tipoEvent
  * * VÍNCULO CON CRITERIOS DE ACEPTACIÓN:
  * - US_004 - ESCENARIO 3: Setea el estado a 'Cancelada' en la base de datos simulada.
  */
-export function cancelarReservasPorTipoEvento(idTurno: string | number, tipoEvento: string, todasLasReservas: Reserva[]): Reserva[] {
-    if (!Array.isArray(todasLasReservas)) return [];
-    return todasLasReservas.map(reserva => {
-        if (String(reserva.idTurno) === String(idTurno) && reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase()) {
-            return { ...reserva, estado: 'Cancelada' };
-        }
-        return reserva;
-    });
+export function cancelarReservasPorTipoEvento(
+  idTurno: string | number,
+  tipoEvento: string,
+  todasLasReservas: Reserva[],
+): Reserva[] {
+  if (!Array.isArray(todasLasReservas)) return [];
+  return todasLasReservas.map((reserva) => {
+    if (
+      String(reserva.idTurno) === String(idTurno) &&
+      reserva.tipoEvento.toLowerCase() === tipoEvento.toLowerCase()
+    ) {
+      return { ...reserva, estado: 'Cancelada' };
+    }
+    return reserva;
+  });
 }

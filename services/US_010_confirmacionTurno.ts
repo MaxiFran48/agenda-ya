@@ -15,9 +15,12 @@ export function evaluarEstadoBoton(turno: Turno | null): boolean {
 }
 
 // escenario 2
-export function confirmarTurnoTemporal(turno: Turno, sesion: EstadoSesion): EstadoSesion {
+export function confirmarTurnoTemporal(
+  turno: Turno,
+  sesion: EstadoSesion,
+): EstadoSesion {
   if (!turno.disponible) {
-    throw new Error("El turno acaba de ser tomado por otro usuario");
+    throw new Error('El turno acaba de ser tomado por otro usuario');
   }
   return {
     ...sesion,
@@ -30,7 +33,7 @@ export function confirmarTurnoTemporal(turno: Turno, sesion: EstadoSesion): Esta
 // escenario 3
 export function verificarExpiracionReserva(
   sesion: EstadoSesion,
-  tiempoMaximoMs: number = 10 * 60 * 1000
+  tiempoMaximoMs: number = 10 * 60 * 1000,
 ): { sesion: EstadoSesion; liberarTurno: boolean } {
   if (!sesion.fechaConfirmacionMs) {
     return { sesion, liberarTurno: false };

@@ -1,0 +1,21 @@
+# dependencies y salida de build
+node_modules
+.next
+out
+build
+coverage
+
+# lockfile
+pnpm-lock.yaml
+
+# archivos generados / ignorados por git
+next-env.d.ts
+docs
+
+# artefactos de Cypress
+cypress/videos
+cypress/screenshots
+cypress/downloads
+
+# artefactos de debug
+*.html

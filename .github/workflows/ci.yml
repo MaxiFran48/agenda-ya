@@ -1,44 +1,121 @@
-name: CI Pipeline
+name: Pipeline de Integración Continua
 
 on:
   push:
     branches:
-      - '**' # Disparar con cualquier rama
+      - main
+      - develop
+      - 'hotfix/**'
   pull_request:
     branches:
-      - '**' # Disparar al crear o actualizar un Pull Request en cualquier rama
+      - main
+      - develop
 
 jobs:
-  build-and-test:
-    name: Build and Test
+  calidad_y_formato:
+    name: Verificación de Formato y Linter
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Grabar el código en la máquina virtual de GitHub
-      - name: Checkout repository
+      - name: Descargar código del repositorio
         uses: actions/checkout@v4
 
-      # 2. Instalar pnpm
-      - name: Install pnpm
+      - name: Configurar pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
-      # 3. Instalar Node.js
-      - name: Set up Node.js
+      - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      # 4. Instalar las dependencias del proyecto
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      # 5. Ejecutar tests unitarios
-      - name: Run unit tests
-        run: pnpm test
+      - name: Verificar formato de código (Prettier)
+        run: pnpm format:check
 
-      # 6. Compilar la app de Next.js para verificar que no haya errores de compilación
-      - name: Build project
+      - name: Verificar buenas prácticas (ESLint)
+        run: pnpm lint
+
+  tests_unitarios:
+    name: Tests Unitarios (Jest)
+    runs-on: ubuntu-latest
+    needs: calidad_y_formato
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar tests unitarios
+        run: pnpm test:unit
+
+  build:
+    name: Build (Next.js)
+    runs-on: ubuntu-latest
+    needs: tests_unitarios
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar proyecto (Build)
         run: pnpm build
+
+  tests_e2e:
+    name: Tests E2E (Cypress)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar tests E2E
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          browser: chrome
+          build: pnpm build
+          start: pnpm start
+          wait-on: 'http://localhost:3000'

@@ -13,12 +13,20 @@ describe('AgendaYA - US_001 - CP-001-01: Habilitación de día para trabajar (Co
     //    Martes inicia deshabilitado (gris) y sin casilla marcada.
     //    Scroll para centrar la tarjeta de Martes en el encuadre de grabación
     //    (block: center evita que el checkbox quede cortado sobre el borde superior).
-    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({ block: 'center' });
-    cy.get('[data-cy="dia-contenedor-martes"]').should('have.class', 'bg-gray-200');
+    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({
+      block: 'center',
+    });
+    cy.get('[data-cy="dia-contenedor-martes"]').should(
+      'have.class',
+      'bg-gray-200',
+    );
     cy.get('[data-cy="dia-checkbox-martes"]').should('not.be.checked');
 
     // Sanity: Miércoles comienza habilitado (blanco).
-    cy.get('[data-cy="dia-contenedor-miércoles"]').should('have.class', 'bg-white');
+    cy.get('[data-cy="dia-contenedor-miércoles"]').should(
+      'have.class',
+      'bg-white',
+    );
 
     // Act: ejecutar la acción principal
     // 2. Click en el checkbox desmarcado del día "Martes":
@@ -29,7 +37,10 @@ describe('AgendaYA - US_001 - CP-001-01: Habilitación de día para trabajar (Co
 
     // Assert: verificar el resultado esperado
     cy.get('[data-cy="dia-checkbox-martes"]').should('be.checked');
-    cy.get('[data-cy="dia-contenedor-martes"]').should('have.class', 'bg-white');
+    cy.get('[data-cy="dia-contenedor-martes"]').should(
+      'have.class',
+      'bg-white',
+    );
     cy.get('[data-cy="btn-agregar-turno-martes"]').should('be.visible');
 
     // Act: agregar un turno con horario al día Martes
@@ -57,15 +68,20 @@ describe('AgendaYA - US_001 - CP-001-01: Habilitación de día para trabajar (Co
     // Assert: verificar el resultado esperado
     cy.get('[data-cy="mensaje-alerta-global"]').should(
       'contain.text',
-      'Cambios guardados exitosamente'
+      'Cambios guardados exitosamente',
     );
 
     // Assert: post-condiciones, Martes quedó marcado y en blanco.
     // Scroll para centrar la tarjeta de Martes en el encuadre de grabación
     // (block: center evita que el checkbox quede cortado sobre el borde superior).
-    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({ block: 'center' });
+    cy.get('[data-cy="dia-contenedor-martes"]').scrollIntoView({
+      block: 'center',
+    });
     cy.get('[data-cy="dia-checkbox-martes"]').should('be.checked');
-    cy.get('[data-cy="dia-contenedor-martes"]').should('have.class', 'bg-white');
+    cy.get('[data-cy="dia-contenedor-martes"]').should(
+      'have.class',
+      'bg-white',
+    );
 
     // Pausa breve para que el estado final (día seleccionado) quede visible en el video.
     cy.wait(2000);

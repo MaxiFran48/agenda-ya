@@ -19,20 +19,20 @@ describe('CP-006: Confirmar/Abortar bloqueo de días con reservas', () => {
 
     // Assert:
     cy.get('[data-cy="modal-advertencia"]').should('be.visible');
-    
+
     // Arrange: turnos mockeados 1 y 2 están en el día relativo 5
     // Act: confirmar bloqueo
     cy.get('[data-cy="btn-confirmar-bloqueo"]').click();
-    
+
     // Assert: los turnos se cancelan visualmente antes de cerrarse
     cy.get('[data-cy="estado-turno-1"]').should('contain.text', 'Cancelado');
     cy.get('[data-cy="estado-turno-2"]').should('contain.text', 'Cancelado');
-    
+
     // Assert: el modal se cierra y aparece el mensaje de éxito
     cy.get('[data-cy="modal-advertencia"]').should('not.exist');
     cy.get('[data-cy="mensaje-confirmacion"]').should(
-      'contain.text', 
-      'Bloqueo añadido, el mismo se notificará al guardar los cambios'
+      'contain.text',
+      'Bloqueo añadido, el mismo se notificará al guardar los cambios',
     );
   });
 
@@ -46,15 +46,15 @@ describe('CP-006: Confirmar/Abortar bloqueo de días con reservas', () => {
 
     // Assert:
     cy.get('[data-cy="modal-advertencia"]').should('be.visible');
-    
-    // Arrange: 
+
+    // Arrange:
     // Act: abortar bloqueo
     cy.get('[data-cy="btn-abortar-bloqueo"]').click();
 
     // Assert: modal desaparece, no hay mensaje y se puede ver en la UI principal
     cy.get('[data-cy="modal-advertencia"]').should('not.exist');
     cy.get('[data-cy="mensaje-confirmacion"]').should('not.exist');
-    
+
     // También el día sigue seleccionado y esperando. Solo aserciones sin depender de la clase css.
     cy.get(`[data-cy="dia-${fecha}"]`).should('not.be.disabled');
   });

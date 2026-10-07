@@ -1,16 +1,16 @@
 export interface TurnoOcupado {
   inicio: string; // Formato "HH:MM"
-  fin: string;    // Formato "HH:MM"
+  fin: string; // Formato "HH:MM"
 }
 
 /**
  * Verifica si una franja de inicio permite completar el evento antes de un choque o del cierre.
  */
 export function esFranjaValida(
-  inicio: string, 
-  duracion: number, 
-  turnosOcupados: TurnoOcupado[], 
-  horaCierre: string
+  inicio: string,
+  duracion: number,
+  turnosOcupados: TurnoOcupado[],
+  horaCierre: string,
 ): boolean {
   const [hInicio, mInicio] = inicio.split(':').map(Number);
   const totalMinutosInicio = hInicio * 60 + mInicio;
@@ -26,16 +26,21 @@ export function esFranjaValida(
 
   // ESCENARIO 2: Evitar solapamientos con turnos ocupados
   for (const turno of turnosOcupados) {
-    const [hOcupadoInicio, mOcupadoInicio] = turno.inicio.split(':').map(Number);
+    const [hOcupadoInicio, mOcupadoInicio] = turno.inicio
+      .split(':')
+      .map(Number);
     const [hOcupadoFin, mOcupadoFin] = turno.fin.split(':').map(Number);
-    
+
     const minutosOcupadoInicio = hOcupadoInicio * 60 + mOcupadoInicio;
     const minutosOcupadoFin = hOcupadoFin * 60 + mOcupadoFin;
 
     if (
-      (totalMinutosInicio >= minutosOcupadoInicio && totalMinutosInicio < minutosOcupadoFin) ||
-      (totalMinutosFin > minutosOcupadoInicio && totalMinutosFin <= minutosOcupadoFin) ||
-      (totalMinutosInicio <= minutosOcupadoInicio && totalMinutosFin >= minutosOcupadoFin)
+      (totalMinutosInicio >= minutosOcupadoInicio &&
+        totalMinutosInicio < minutosOcupadoFin) ||
+      (totalMinutosFin > minutosOcupadoInicio &&
+        totalMinutosFin <= minutosOcupadoFin) ||
+      (totalMinutosInicio <= minutosOcupadoInicio &&
+        totalMinutosFin >= minutosOcupadoFin)
     ) {
       return false;
     }
@@ -48,14 +53,14 @@ export function esFranjaValida(
  * Filtra las franjas horarias. Si no queda ninguna continua, el día no estará disponible.
  */
 export function obtenerFranjasDisponibles(
-  bloquesDelDia: string[], 
-  duracion: number, 
-  turnosOcupados: TurnoOcupado[], 
-  horaCierre: string
+  bloquesDelDia: string[],
+  duracion: number,
+  turnosOcupados: TurnoOcupado[],
+  horaCierre: string,
 ): string[] {
   const GRANULARIDAD = 30; // minutos
   const bloquesMinutos = bloquesDelDia
-    .map(h => {
+    .map((h) => {
       const [hh, mm] = h.split(':').map(Number);
       return hh * 60 + mm;
     })
