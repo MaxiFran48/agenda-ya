@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "agenda-ya-dev",
+    "prod": "agenda-ya-prod",
+    "dev": "agenda-ya-dev"
+  },
+  "targets": {},
+  "etags": {}
+}

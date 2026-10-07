@@ -119,3 +119,77 @@ jobs:
           build: pnpm build
           start: pnpm start
           wait-on: 'http://localhost:3000'
+
+  deploy_dev:
+    name: Deploy a Desarrollo (Firebase Hosting)
+    runs-on: ubuntu-latest
+    needs: tests_e2e
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment:
+      name: development
+      url: https://agenda-ya-dev.web.app
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar proyecto (Build estático)
+        run: pnpm build
+
+      - name: Desplegar a Firebase Hosting (dev)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
+          projectId: agenda-ya-dev
+          channelId: live
+
+  deploy_prod:
+    name: Deploy a Producción (Firebase Hosting)
+    runs-on: ubuntu-latest
+    needs: tests_e2e
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://agenda-ya-prod.web.app
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar proyecto (Build estático)
+        run: pnpm build
+
+      - name: Desplegar a Firebase Hosting (prod)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          projectId: agenda-ya-prod
+          channelId: live
