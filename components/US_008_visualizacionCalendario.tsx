@@ -1,9 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  evaluarDisponibilidadDia,
+  type AgendaSemanal,
+  type DiaCalendario,
+} from '../services/US_008_visualizacionCalendario';
 
 // Días de la semana para el encabezado
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+// Nombres completos de los días (Lunes..Domingo) usados por la agenda
+const NOMBRES_DIAS = [
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+  'Domingo',
+];
 
 // Simulación de los días de Junio 2026.
 // Junio 2026 empieza un Lunes y tiene 30 días.
@@ -12,12 +28,37 @@ const DIAS_JUNIO_2026 = Array.from({ length: 30 }, (_, i) => i + 1);
 // Días con turnos disponibles pre-configurados (Datos de Prueba)
 const DIAS_DISPONIBLES = [15, 16, 18];
 
+// Días que el administrador bloqueó manualmente (Datos de Prueba).
+// INC-001: el día 16 está bloqueado, pero por el defecto inyectado en
+// evaluarDisponibilidadDia igual se muestra como disponible al invitado.
+const DIAS_BLOQUEADOS_MANUALMENTE = [16];
+
+const AGENDA_SEMANAL: AgendaSemanal = {
+  diasHabilitados: NOMBRES_DIAS,
+  antelacionMinimaMinutos: 30,
+};
+
+// Construye el modelo del día para la evaluación de disponibilidad.
+// Junio 2026 empieza un Lunes, por eso el offset (dia - 1) % 7.
+const construirDiaCalendario = (dia: number): DiaCalendario => {
+  const indiceSemana = (dia - 1) % 7;
+  return {
+    nombreDia: NOMBRES_DIAS[indiceSemana],
+    esFinDeSemana: indiceSemana >= 5,
+    esBloqueadoManual: DIAS_BLOQUEADOS_MANUALMENTE.includes(dia),
+  };
+};
+
 export default function VisualizacionCalendarioPublico() {
   const [mensajeInteraccion, setMensajeInteraccion] = useState<string>('');
 
+  const esDiaDisponible = (dia: number): boolean =>
+    DIAS_DISPONIBLES.includes(dia) &&
+    evaluarDisponibilidadDia(construirDiaCalendario(dia), AGENDA_SEMANAL);
+
   const handleDayClick = (dia: number) => {
     // Si el día está disponible, simulamos que selecciona la fecha
-    if (DIAS_DISPONIBLES.includes(dia)) {
+    if (esDiaDisponible(dia)) {
       setMensajeInteraccion(
         `✓ Has seleccionado el día ${dia} de Junio de 2026 para reservar.`,
       );
@@ -54,7 +95,7 @@ export default function VisualizacionCalendarioPublico() {
           {/* Cuadrícula del mes */}
           <div className="grid grid-cols-7 gap-2">
             {DIAS_JUNIO_2026.map((dia) => {
-              const esDisponible = DIAS_DISPONIBLES.includes(dia);
+              const esDisponible = esDiaDisponible(dia);
 
               // Clases dinámicas dependiendo de la disponibilidad (CP-008-01 vs CP-008-02)
               const buttonClasses = esDisponible
