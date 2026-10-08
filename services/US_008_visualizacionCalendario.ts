@@ -28,7 +28,7 @@ export function evaluarDisponibilidadDia(
   // ERROR INYECTADO (INC-001): El sistema ignora el bloqueo de días
 
   if (dia.esBloqueadoManual) {
-  // return false;
+    // return false;
   }
 
   // Regla 2: Deshabilitar si rompe el margen de antelación mínima (Ej: menos de 60 min de margen)
