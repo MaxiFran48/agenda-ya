@@ -52,3 +52,19 @@ describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-03: Debe inva
     expect(resultado).toBe(false);
   });
 });
+
+describe('Pruebas Unitarias para US_008 - Daniel Salomón - CP-008-02: Debe deshabilitar un día si el administrador lo configuró como bloqueado', () => {
+  const agendaSemanal = (): AgendaSemanal => ({
+    diasHabilitados: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    antelacionMinimaMinutos: 30,
+  });
+
+  test('Debería dar falso si el día está bloqueado manualmente', () => {
+    const diaBloqueado: DiaCalendario = {
+      nombreDia: 'Jueves',
+      esFinDeSemana: false,
+      esBloqueadoManual: true,
+    };
+    expect(evaluarDisponibilidadDia(diaBloqueado, agendaSemanal())).toBe(false);
+  });
+});
